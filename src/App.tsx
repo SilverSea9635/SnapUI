@@ -1,14 +1,13 @@
-import './App.css';
-// import List from '@/components/List.tsx';
-import Hooks from './components/Hooks';
+import { RouterProvider } from 'react-router-dom';
+import { router } from '@/router/index.tsx';
+import Toast from '@/components/Toast.tsx';
 
 function App() {
-
   return (
-    <main className="app-shell">
-      {/*<List/>*/}
-      <Hooks/>
-    </main>
+    <>
+      <RouterProvider router={router} />
+      <Toast />
+    </>
   );
 }
 

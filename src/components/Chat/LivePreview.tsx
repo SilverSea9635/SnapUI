@@ -15,7 +15,17 @@ export function LivePreview({ code }: Props) {
         filename: 'live.tsx',
       }).code!;
 
-      const fn = new Function('React', `${compiled}; return Component;`);
+      const stripped = compiled.replace(/^import\s+[\s\S]*?from\s+['"][^'"]+['"];?\s*/gm, '');
+      const preamble = [
+        'var useState = React.useState;',
+        'var useEffect = React.useEffect;',
+        'var useRef = React.useRef;',
+        'var useMemo = React.useMemo;',
+        'var useCallback = React.useCallback;',
+        'var useContext = React.useContext;',
+      ].join('\n');
+
+      const fn = new Function('React', `${preamble}\n${stripped}; return Component;`);
       const Component = fn(React) as React.ComponentType;
 
       setElement(React.createElement(Component));

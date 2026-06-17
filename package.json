@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "description": "一个基于tsx的react应用,该项目主要面向PM，产品经理等角色。 可以根据上传的截图生成对应的react组件，并通过babel/standalone编译后在浏览器中实时预览。",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -12,19 +13,21 @@
   "dependencies": {
     "@babel/standalone": "^7.29.2",
     "axios": "^1.14.0",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-router-dom": "^7.17.0",
+    "zod": "^4.4.3",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
     "@eslint/js": "^9.39.4",
-    "@rolldown/plugin-babel": "^0.2.1",
     "@types/babel__core": "^7.20.5",
     "@types/babel__standalone": "^7.1.9",
     "@types/node": "^24.12.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.1",
+    "@vitejs/plugin-react": "^6.0.2",
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
@@ -32,6 +35,6 @@
     "globals": "^17.4.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.57.0",
-    "vite": "^8.0.1"
+    "vite": "8.0.5"
   }
 }
