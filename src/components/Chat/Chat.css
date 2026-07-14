@@ -473,7 +473,6 @@
   font-family: var(--font-mono);
   font-size: 13px;
   line-height: 1.65;
-  color: var(--chat-text);
   background: var(--bg);
   white-space: pre;
   tab-size: 2;

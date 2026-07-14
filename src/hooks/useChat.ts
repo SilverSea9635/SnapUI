@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { type ChatComposePayload, type ChatMessage } from '@/components/Chat/Chat.tsx';
 import { API_BASE } from '@/Utils/request';
 import { useCreditsStore, useUIStore } from '@/stores';
+import { refreshAccessToken } from '@/stores/auth';
 
 const CHAT_SYSTEM_PROMPT = `你是一个简洁、准确的中文 AI 助手。
 当用户要求生成 React 组件时，请严格使用以下格式，组件必须命名为 Component，不要使用 export。
@@ -12,8 +13,6 @@ function Component() {
 \`\`\``;
 const CHAT_MODEL = '';
 const DEFAULT_IMAGE_PROMPT = 'please describe the content of the image';
-
-const MESSAGES_KEY = 'snapui-messages';
 
 type ChatRequestContentItem =
   | {
@@ -29,24 +28,58 @@ type ChatRequestContentItem =
   text: string;
 };
 
-function loadMessagesMap(): Record<string, ChatMessage[]> {
-  try {
-    return JSON.parse(localStorage.getItem(MESSAGES_KEY) || '{}');
-  } catch {
-    return {};
+function buildHeaders(): Record<string, string> {
+  const h: Record<string, string> = { 'Content-Type': 'application/json' };
+  const t = localStorage.getItem('snapui-token');
+  if (t) h['Authorization'] = `Bearer ${t}`;
+  return h;
+}
+
+async function authFetch(url: string, init: RequestInit): Promise<Response> {
+  let response = await fetch(url, init);
+  if (response.status === 401) {
+    const ok = await refreshAccessToken();
+    if (ok) {
+      response = await fetch(url, { ...init, headers: buildHeaders() });
+    }
   }
+  return response;
 }
 
-function saveMessages(conversationId: string, messages: ChatMessage[]) {
-  const map = loadMessagesMap();
-  map[conversationId] = messages;
-  localStorage.setItem(MESSAGES_KEY, JSON.stringify(map));
+export async function fetchConversations(page = 1, pageSize = 20, signal?: AbortSignal) {
+  const response = await authFetch(`${API_BASE}/api/history?page=${page}&pageSize=${pageSize}`, {
+    headers: buildHeaders(),
+    signal,
+  });
+  if (!response.ok) throw new Error('获取对话列表失败');
+  return response.json();
 }
 
-function removeMessages(conversationId: string) {
-  const map = loadMessagesMap();
-  delete map[conversationId];
-  localStorage.setItem(MESSAGES_KEY, JSON.stringify(map));
+export async function fetchConversationDetail(conversationId: string) {
+  const response = await authFetch(`${API_BASE}/api/history/${conversationId}`, {
+    headers: buildHeaders(),
+  });
+  if (!response.ok) throw new Error('获取对话详情失败');
+  return response.json();
+}
+
+export async function createConversationApi(title?: string) {
+  const response = await authFetch(`${API_BASE}/api/history`, {
+    method: 'POST',
+    headers: buildHeaders(),
+    body: JSON.stringify({ title }),
+  });
+  if (!response.ok) throw new Error('创建对话失败');
+  return response.json() as Promise<{ conversationId: string }>;
+}
+
+export async function deleteConversationApi(conversationId: string) {
+  const response = await authFetch(`${API_BASE}/api/history/${conversationId}`, {
+    method: 'DELETE',
+    headers: buildHeaders(),
+  });
+  if (!response.ok) throw new Error('删除对话失败');
+  return response.json();
 }
 
 export function useChat() {
@@ -60,25 +93,67 @@ export function useChat() {
     abortRef.current?.abort();
   };
 
-  const reset = useCallback(() => {
+  const reset = () => {
     stopGenerating();
     setMessages([]);
     setConversationId(null);
     convoIdRef.current = null;
     setIsSending(false);
-  }, []);
+  };
 
-  const loadConversation = useCallback((convoId: string) => {
+  const loadConversation = useCallback(async (convoId: string) => {
     stopGenerating();
-    const map = loadMessagesMap();
-    setMessages(map[convoId] || []);
-    setConversationId(convoId);
-    convoIdRef.current = convoId;
     setIsSending(false);
+
+    try {
+      const detail = await fetchConversationDetail(convoId);
+      const loadedMessages: ChatMessage[] = detail.messages.map((m: {
+        id: number;
+        role: string;
+        content: string | Array<{ type: string; text?: string }>;
+        createdAt: string;
+      }) => {
+        let content = '';
+        let imageUrl: string | undefined;
+
+        if (typeof m.content === 'string') {
+          content = m.content;
+        } else if (Array.isArray(m.content)) {
+          const textParts: string[] = [];
+          for (const block of m.content) {
+            if (block.type === 'text' && block.text) {
+              textParts.push(block.text);
+            }
+          }
+          content = textParts.join('');
+        }
+
+        return {
+          id: m.id,
+          type: m.role === 'user' ? 'user' : 'ai',
+          content,
+          imageUrl,
+          time: new Date(m.createdAt).getTime(),
+        } as ChatMessage;
+      });
+
+      setMessages(loadedMessages);
+      setConversationId(convoId);
+      convoIdRef.current = convoId;
+    } catch {
+      // Fallback: set empty state
+      setMessages([]);
+      setConversationId(convoId);
+      convoIdRef.current = convoId;
+    }
   }, []);
 
-  const deleteConversation = useCallback((convoId: string) => {
-    removeMessages(convoId);
+  const deleteConversation = useCallback(async (convoId: string) => {
+    try {
+      await deleteConversationApi(convoId);
+    } catch {
+      // ignore API error, still remove from local state
+    }
     if (convoIdRef.current === convoId) {
       reset();
     }
@@ -110,11 +185,7 @@ export function useChat() {
     }
     const currentConvoId = convoIdRef.current;
 
-    setMessages((prev) => {
-      const next = [...prev, userMessage];
-      if (currentConvoId) saveMessages(currentConvoId, next);
-      return next;
-    });
+    setMessages((prev) => [...prev, userMessage]);
     setIsSending(true);
 
     const commaIndex = imageDataUrl?.indexOf(',');
@@ -130,31 +201,41 @@ export function useChat() {
       : undefined;
 
     const aiMsgId = now + 1;
-    setMessages((prev) => {
-      const next = [...prev, { id: aiMsgId, type: 'ai' as const, content: '', time: Date.now() }];
-      if (currentConvoId) saveMessages(currentConvoId, next);
-      return next;
-    });
+    setMessages((prev) => [...prev, { id: aiMsgId, type: 'ai' as const, content: '', time: Date.now() }]);
 
     const controller = new AbortController();
     abortRef.current = controller;
 
     try {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      const token = localStorage.getItem('snapui-token');
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      const response = await fetch(`${API_BASE}/api/chat`, {
+      let response = await fetch(`${API_BASE}/api/chat`, {
         method: 'POST',
-        headers,
+        headers: buildHeaders(),
         signal: controller.signal,
         body: JSON.stringify({
           message: multimodalContent ?? promptText,
-          conversationId,
+          conversationId: currentConvoId,
           system: CHAT_SYSTEM_PROMPT,
           model: CHAT_MODEL || undefined,
         }),
       });
+
+      // Auto-refresh on 401
+      if (response.status === 401) {
+        const ok = await refreshAccessToken();
+        if (ok) {
+          response = await fetch(`${API_BASE}/api/chat`, {
+            method: 'POST',
+            headers: buildHeaders(),
+            signal: controller.signal,
+            body: JSON.stringify({
+              message: multimodalContent ?? promptText,
+              conversationId: currentConvoId,
+              system: CHAT_SYSTEM_PROMPT,
+              model: CHAT_MODEL || undefined,
+            }),
+          });
+        }
+      }
 
       if (!response.ok || !response.body) {
         throw new Error(`请求失败：${response.status} ${response.statusText}`);
@@ -184,13 +265,11 @@ export function useChat() {
           }
 
           if ('text' in parsed && typeof parsed.text === 'string') {
-            setMessages((prev) => {
-              const next = prev.map((m) =>
+            setMessages((prev) =>
+              prev.map((m) =>
                 m.id === aiMsgId ? { ...m, content: m.content + parsed.text } : m,
-              );
-              if (convoIdRef.current) saveMessages(convoIdRef.current, next);
-              return next;
-            });
+              ),
+            );
           } else if ('conversationId' in parsed && typeof parsed.conversationId === 'string') {
             setConversationId(parsed.conversationId);
             convoIdRef.current = parsed.conversationId;
@@ -201,23 +280,18 @@ export function useChat() {
       useCreditsStore.getState().deduct(cost, mode === 'adjust' ? 'AI 组件调整' : 'AI 组件生成').catch(() => {});
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
-        // 用户主动停止，不显示错误
-        setMessages((prev) => {
-          const next = prev.map((m) =>
+        setMessages((prev) =>
+          prev.map((m) =>
             m.id === aiMsgId ? { ...m, content: m.content || '（已停止生成）' } : m,
-          );
-          if (convoIdRef.current) saveMessages(convoIdRef.current, next);
-          return next;
-        });
+          ),
+        );
       } else {
         const errorMessage = error instanceof Error ? error.message : '请求失败，请稍后重试。';
-        setMessages((prev) => {
-          const next = prev.map((m) =>
+        setMessages((prev) =>
+          prev.map((m) =>
             m.id === aiMsgId ? { ...m, content: `请求失败：${errorMessage}` } : m,
-          );
-          if (convoIdRef.current) saveMessages(convoIdRef.current, next);
-          return next;
-        });
+          ),
+        );
       }
     } finally {
       abortRef.current = null;
@@ -225,5 +299,5 @@ export function useChat() {
     }
   };
 
-  return { messages, isSending, sendMessage, stopGenerating, reset, loadConversation, deleteConversation };
+  return { messages, conversationId, isSending, sendMessage, stopGenerating, reset, loadConversation, deleteConversation };
 }

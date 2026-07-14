@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
-import { Link, Outlet } from 'react-router-dom';
+import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuthStore, useUIStore, useCreditsStore } from '@/stores';
 import SignInButton from '@/components/SignInButton';
 
 function Layout() {
+  const navigate = useNavigate();
   const theme = useUIStore((s) => s.theme);
   const toggleTheme = useUIStore((s) => s.toggleTheme);
   const user = useAuthStore((s) => s.user);
@@ -31,10 +32,11 @@ function Layout() {
         </Link>
         <ul className="nav__links">
           <li><Link className="nav__link" to="/quick-start">开始使用</Link></li>
+          {user && <li><Link className="nav__link" to="/history">历史记录</Link></li>}
           <li><a className="nav__link" href="https://github.com" target="_blank" rel="noreferrer">GitHub</a></li>
           {user ? (
             <>
-              <li className="nav__credits">
+              <li className="nav__credits" onClick={() => navigate('/credits')} style={{ cursor: 'pointer' }}>
                 <span className="nav__credits-icon">&#9733;</span>
                 <span className="nav__credits-value">{balance}</span>
               </li>

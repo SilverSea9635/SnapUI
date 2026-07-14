@@ -1,4 +1,5 @@
-import axios, { type AxiosRequestConfig } from 'axios';
+import axios, { type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios';
+import { refreshAccessToken } from '@/stores/auth';
 
 export const API_BASE = 'http://127.0.0.1:3000';
 
@@ -16,9 +17,64 @@ instance.interceptors.request.use((config) => {
   return config;
 });
 
+let isRefreshing = false;
+let pendingQueue: Array<{
+  resolve: (token: string) => void;
+  reject: (err: unknown) => void;
+}> = [];
+
+function processPendingQueue(error: unknown, token: string | null) {
+  pendingQueue.forEach(({ resolve, reject }) => {
+    if (error || !token) {
+      reject(error);
+    } else {
+      resolve(token);
+    }
+  });
+  pendingQueue = [];
+}
+
 instance.interceptors.response.use(
   (res) => res.data,
-  (err) => {
+  async (err) => {
+    const originalRequest = err.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
+    if (err.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          pendingQueue.push({
+            resolve: (token: string) => {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              resolve(instance(originalRequest));
+            },
+            reject,
+          });
+        });
+      }
+
+      isRefreshing = true;
+      try {
+        const ok = await refreshAccessToken();
+        if (ok) {
+          const newToken = localStorage.getItem('snapui-token');
+          processPendingQueue(null, newToken);
+          if (newToken) {
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          }
+          return instance(originalRequest);
+        }
+        processPendingQueue(err, null);
+        return Promise.reject(err);
+      } catch (refreshErr) {
+        processPendingQueue(refreshErr, null);
+        return Promise.reject(refreshErr);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
     const message = err.response?.data?.error || err.message || '请求失败';
     return Promise.reject(new Error(message));
   },

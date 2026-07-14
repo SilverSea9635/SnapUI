@@ -28,6 +28,8 @@ interface CreditsState {
   balance: number;
   packages: CreditPackage[];
   transactions: Transaction[];
+  transactionsTotal: number;
+  transactionsPage: number;
   isLoading: boolean;
   error: string | null;
 
@@ -48,6 +50,8 @@ export const useCreditsStore = create<CreditsState>((set) => ({
   balance: 0,
   packages: [],
   transactions: [],
+  transactionsTotal: 0,
+  transactionsPage: 1,
   isLoading: false,
   error: null,
 
@@ -88,8 +92,16 @@ export const useCreditsStore = create<CreditsState>((set) => ({
   fetchTransactions: async (page = 1) => {
     set({ isLoading: true });
     try {
-      const { data } = await get<{ data: Transaction[] }>(`/api/credits/transactions?page=${page}`);
-      set({ transactions: data, isLoading: false });
+      const res = await get<{ data: Array<Record<string, unknown>>; total: number; page: number }>(`/api/credits/transactions?page=${page}`);
+      const transactions: Transaction[] = res.data.map((row) => ({
+        id: String(row.id),
+        type: row.type as Transaction['type'],
+        amount: Number(row.amount),
+        balance: Number(row.balance),
+        description: String(row.description || ''),
+        createdAt: String(row.created_at || row.createdAt),
+      }));
+      set({ transactions, transactionsTotal: res.total, transactionsPage: res.page, isLoading: false });
     } catch (err) {
       set({ error: (err as Error).message, isLoading: false });
     }

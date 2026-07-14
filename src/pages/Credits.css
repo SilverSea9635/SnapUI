@@ -1,0 +1,254 @@
+/* ─── Credits Page ─── */
+.credits-page {
+  min-height: 100vh;
+  padding: 5.5rem clamp(1.5rem, 5vw, 4rem) 4rem;
+  display: flex;
+  justify-content: center;
+}
+
+.credits-container {
+  width: 100%;
+  max-width: 720px;
+}
+
+/* ─── Header ─── */
+.credits-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.credits-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.credits-back:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.credits-header__title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+  flex: 1;
+}
+
+/* ─── Balance Card ─── */
+.credits-balance {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+  border-radius: 16px;
+  background: var(--accent-gradient);
+  color: #fff;
+  margin-bottom: 32px;
+}
+
+.credits-balance__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.2);
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.credits-balance__info {
+  flex: 1;
+}
+
+.credits-balance__label {
+  font-size: 13px;
+  opacity: 0.85;
+  margin-bottom: 4px;
+}
+
+.credits-balance__value {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* ─── Section Title ─── */
+.credits-section-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+
+/* ─── Loading ─── */
+.credits-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.credits-spinner {
+  width: 28px;
+  height: 28px;
+  border: 2.5px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: credits-spin 0.7s linear infinite;
+}
+
+@keyframes credits-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Empty ─── */
+.credits-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* ─── Transaction List ─── */
+.credits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.credits-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--bg-card);
+  transition: background 0.15s ease;
+}
+
+.credits-item:hover {
+  background: var(--accent-glow);
+}
+
+.credits-item__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+.credits-item__icon--gift {
+  background: rgba(22, 163, 74, 0.1);
+  color: #16a34a;
+}
+
+.credits-item__icon--deduct {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+
+.credits-item__icon--recharge {
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+}
+
+.credits-item__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.credits-item__desc {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.credits-item__time {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.credits-item__amount {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.credits-item__amount--positive {
+  color: #16a34a;
+}
+
+.credits-item__amount--negative {
+  color: #dc2626;
+}
+
+/* ─── Pagination ─── */
+.credits-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.credits-page-btn {
+  padding: 8px 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.credits-page-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.credits-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.credits-page-info {
+  font-size: 13px;
+  color: var(--text-secondary);
+  min-width: 60px;
+  text-align: center;
+}

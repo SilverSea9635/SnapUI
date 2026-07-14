@@ -14,25 +14,8 @@ function Login() {
     e.preventDefault();
     const ok = await login(email, password);
     if (ok) {
-      // Use the REAL form (with type="password" input) to trigger
-      // the browser's save-password prompt.
-      const iframe = document.createElement('iframe');
-      iframe.name = 'login-bridge';
-      iframe.style.display = 'none';
-      document.body.appendChild(iframe);
-
-      const form = formRef.current!;
-      const originalTarget = form.target;
-      form.target = 'login-bridge';
-      form.action = '/api/auth/login';
-      form.method = 'POST';
-      form.submit();
-      form.target = originalTarget;
-      form.removeAttribute('action');
-
       const from = (location.state as { from?: string })?.from || '/';
       setTimeout(() => {
-        iframe.remove();
         navigate(from, { replace: true });
       }, 200);
     }
@@ -71,6 +54,7 @@ function Login() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+            <Link className="auth-form__forgot" to="/forgot-password">忘记密码？</Link>
           </label>
 
           <button className="auth-form__btn" type="submit" disabled={isLoading}>

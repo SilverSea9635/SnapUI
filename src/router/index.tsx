@@ -6,7 +6,11 @@ import QuickStart from '@/pages/QuickStart.tsx';
 import ChatPage from '@/pages/ChatPage.tsx';
 import Login from '@/pages/Login.tsx';
 import Register from '@/pages/Register.tsx';
+import ForgotPassword from '@/pages/ForgotPassword.tsx';
 import Profile from '@/pages/Profile.tsx';
+import History from '@/pages/History.tsx';
+import HistoryDetail from '@/pages/HistoryDetail.tsx';
+import Credits from '@/pages/Credits.tsx';
 
 const routes = [
   {
@@ -26,6 +30,10 @@ const routes = [
         element: <Register />,
       },
       {
+        path: 'forgot-password',
+        element: <ForgotPassword />,
+      },
+      {
         path: 'quick-start',
         element: (
           <RequireAuth>
@@ -38,6 +46,30 @@ const routes = [
         element: (
           <RequireAuth>
             <ChatPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: 'history',
+        element: (
+          <RequireAuth>
+            <History />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: 'history/:conversationId',
+        element: (
+          <RequireAuth>
+            <HistoryDetail />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: 'credits',
+        element: (
+          <RequireAuth>
+            <Credits />
           </RequireAuth>
         ),
       },

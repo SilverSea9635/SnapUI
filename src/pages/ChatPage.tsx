@@ -1,27 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Chat } from '@/components/Chat/Chat.tsx';
-import { useChat } from '@/hooks/useChat.ts';
+import { useChat, fetchConversations, createConversationApi } from '@/hooks/useChat.ts';
 import { useAuthStore, useUIStore } from '@/stores';
 import './ChatPage.css';
 
 type Conversation = {
   id: string;
   title: string;
-  createdAt: number;
+  createdAt: string;
 };
-
-function getStoredConversations(): Conversation[] {
-  try {
-    return JSON.parse(localStorage.getItem('snapui-conversations') || '[]');
-  } catch {
-    return [];
-  }
-}
-
-function storeConversations(convos: Conversation[]) {
-  localStorage.setItem('snapui-conversations', JSON.stringify(convos));
-}
 
 function ChatPage() {
   const navigate = useNavigate();
@@ -32,26 +20,54 @@ function ChatPage() {
   const logout = useAuthStore((s) => s.logout);
 
   const { messages, isSending, sendMessage, stopGenerating, reset, loadConversation, deleteConversation } = useChat();
-  const [conversations, setConversations] = useState<Conversation[]>(getStoredConversations);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConvoId, setCurrentConvoId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const state = location.state as { prompt?: string } | null;
+  const state = location.state as { prompt?: string; conversationId?: string } | null;
 
   const promptSentRef = useRef(false);
+  const historyLoadedRef = useRef(false);
 
-  // Send initial prompt from QuickStart
+  // Load conversation list from server on mount
+  useEffect(() => {
+    fetchConversations()
+      .then((data) => {
+        setConversations(data.conversations || []);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Send initial prompt from QuickStart — proactively create conversation first
   useEffect(() => {
     if (state?.prompt && !promptSentRef.current) {
       promptSentRef.current = true;
-      const id = Date.now().toString();
-      const title = state.prompt.slice(0, 20) + (state.prompt.length > 20 ? '...' : '');
-      const newConvo: Conversation = { id, title, createdAt: Date.now() };
-      const next = [newConvo, ...conversations];
-      setConversations(next);
-      storeConversations(next);
-      setCurrentConvoId(id);
-      sendMessage({ text: state.prompt });
+      const prompt = state.prompt;
+      navigate(location.pathname, { replace: true, state: null });
+
+      createConversationApi(prompt.slice(0, 50))
+        .then(({ conversationId }) => {
+          setCurrentConvoId(conversationId);
+          sendMessage({ text: prompt }, conversationId);
+          refreshConversations();
+        })
+        .catch(() => {
+          // Fallback: send without pre-created conversation
+          const tempId = Date.now().toString();
+          setCurrentConvoId(tempId);
+          sendMessage({ text: prompt }, tempId);
+        });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Load conversation from history page
+  useEffect(() => {
+    if (state?.conversationId && !historyLoadedRef.current) {
+      historyLoadedRef.current = true;
+      const convoId = state.conversationId;
+      loadConversation(convoId);
+      setCurrentConvoId(convoId);
       navigate(location.pathname, { replace: true, state: null });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -62,23 +78,35 @@ function ChatPage() {
     setCurrentConvoId(null);
   };
 
-  const createConversation = (text: string): string => {
-    const id = Date.now().toString();
-    const title = text.slice(0, 20) + (text.length > 20 ? '...' : '');
-    const newConvo: Conversation = { id, title, createdAt: Date.now() };
-    const next = [newConvo, ...conversations];
-    setConversations(next);
-    storeConversations(next);
-    setCurrentConvoId(id);
-    return id;
+  const refreshConversations = () => {
+    fetchConversations()
+      .then((data) => {
+        setConversations(data.conversations || []);
+      })
+      .catch(() => {});
   };
 
   const handleSendMessage = (payload: { text: string; imageDataUrl?: string; media_type?: string }) => {
-    let convoId = currentConvoId;
-    if (!convoId && payload.text.trim()) {
-      convoId = createConversation(payload.text);
+    if (currentConvoId) {
+      sendMessage(payload, currentConvoId);
+      setTimeout(refreshConversations, 1000);
+    } else {
+      // Create conversation on the server first, then send the message
+      const title = payload.text?.slice(0, 50) || '';
+      createConversationApi(title)
+        .then(({ conversationId }) => {
+          setCurrentConvoId(conversationId);
+          sendMessage(payload, conversationId);
+          refreshConversations();
+        })
+        .catch(() => {
+          // Fallback: use temp ID
+          const tempId = Date.now().toString();
+          setCurrentConvoId(tempId);
+          sendMessage(payload, tempId);
+          setTimeout(refreshConversations, 1000);
+        });
     }
-    sendMessage(payload, convoId ?? undefined);
   };
 
   const handleSelectConvo = (id: string) => {
@@ -87,11 +115,10 @@ function ChatPage() {
     setCurrentConvoId(id);
   };
 
-  const handleDeleteConvo = (id: string) => {
+  const handleDeleteConvo = async (id: string) => {
+    await deleteConversation(id);
     const next = conversations.filter((c) => c.id !== id);
     setConversations(next);
-    storeConversations(next);
-    deleteConversation(id);
     if (currentConvoId === id) {
       setCurrentConvoId(null);
     }
@@ -130,7 +157,7 @@ function ChatPage() {
                 <svg className="chat-sidebar__item-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                   <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
                 </svg>
-                <span className="chat-sidebar__item-title">{convo.title}</span>
+                <span className="chat-sidebar__item-title">{convo.title || '新对话'}</span>
                 <span
                   className="chat-sidebar__item-delete"
                   role="button"
