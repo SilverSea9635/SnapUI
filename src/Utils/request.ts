@@ -1,7 +1,7 @@
 import axios, { type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios';
 import { refreshAccessToken } from '@/stores/auth';
 
-export const API_BASE = 'http://127.0.0.1:3000';
+export const API_BASE = import.meta.env.VITE_BASE_URL;
 
 const instance = axios.create({
   baseURL: API_BASE,

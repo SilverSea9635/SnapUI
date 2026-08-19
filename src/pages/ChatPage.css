@@ -1,14 +1,11 @@
 /* ─── Chat Page Shell ─── */
 .chat-page {
   display: flex;
-  position: fixed;
-  top: 3.5rem;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  position: relative;
+  height: calc(100vh - 3.5rem);
+  margin-top: 3.5rem; /* 让出顶部 fixed nav 的高度，使页面回到文档流 */
   overflow: hidden;
   background: var(--bg);
-  z-index: 1;
 }
 
 /* ─── Sidebar ─── */

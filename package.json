@@ -6,7 +6,8 @@
   "description": "一个基于tsx的react应用,该项目主要面向PM，产品经理等角色。 可以根据上传的截图生成对应的react组件，并通过babel/standalone编译后在浏览器中实时预览。",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build --mode development",
+    "build:prod": "tsc -b && vite build --mode production",
     "lint": "eslint .",
     "preview": "vite preview"
   },

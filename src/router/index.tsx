@@ -1,16 +1,23 @@
+import { Suspense, type ReactNode } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 import Layout from '@/components/Layout.tsx';
 import RequireAuth from '@/components/RequireAuth.tsx';
-import Home from '@/pages/Home.tsx';
-import QuickStart from '@/pages/QuickStart.tsx';
-import ChatPage from '@/pages/ChatPage.tsx';
-import Login from '@/pages/Login.tsx';
-import Register from '@/pages/Register.tsx';
-import ForgotPassword from '@/pages/ForgotPassword.tsx';
-import Profile from '@/pages/Profile.tsx';
-import History from '@/pages/History.tsx';
-import HistoryDetail from '@/pages/HistoryDetail.tsx';
-import Credits from '@/pages/Credits.tsx';
+import {
+  ChatPage,
+  Credits,
+  ForgotPassword,
+  History,
+  HistoryDetail,
+  Home,
+  Login,
+  Profile,
+  QuickStart,
+  Register,
+} from './lazyPages';
+
+function lazyPage(element: ReactNode) {
+  return <Suspense fallback={<div aria-live="polite">页面加载中...</div>}>{element}</Suspense>;
+}
 
 const routes = [
   {
@@ -19,23 +26,23 @@ const routes = [
     children: [
       {
         index: true,
-        element: <Home />,
+        element: lazyPage(<Home />),
       },
       {
         path: 'login',
-        element: <Login />,
+        element: lazyPage(<Login />),
       },
       {
         path: 'register',
-        element: <Register />,
+        element: lazyPage(<Register />),
       },
       {
         path: 'forgot-password',
-        element: <ForgotPassword />,
+        element: lazyPage(<ForgotPassword />),
       },
       {
         path: 'quick-start',
-        element: (
+        element: lazyPage(
           <RequireAuth>
             <QuickStart />
           </RequireAuth>
@@ -43,7 +50,7 @@ const routes = [
       },
       {
         path: 'chat',
-        element: (
+        element: lazyPage(
           <RequireAuth>
             <ChatPage />
           </RequireAuth>
@@ -51,7 +58,7 @@ const routes = [
       },
       {
         path: 'history',
-        element: (
+        element: lazyPage(
           <RequireAuth>
             <History />
           </RequireAuth>
@@ -59,7 +66,7 @@ const routes = [
       },
       {
         path: 'history/:conversationId',
-        element: (
+        element: lazyPage(
           <RequireAuth>
             <HistoryDetail />
           </RequireAuth>
@@ -67,7 +74,7 @@ const routes = [
       },
       {
         path: 'credits',
-        element: (
+        element: lazyPage(
           <RequireAuth>
             <Credits />
           </RequireAuth>
@@ -75,7 +82,7 @@ const routes = [
       },
       {
         path: 'profile',
-        element: (
+        element: lazyPage(
           <RequireAuth>
             <Profile />
           </RequireAuth>
