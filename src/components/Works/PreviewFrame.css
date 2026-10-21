@@ -1,0 +1,214 @@
+/* ─── 作品展台（PreviewFrame）───
+   设计意图：不做第二个「假浏览器」——生成组件自带浏览器外框（LivePreview），
+   这里只提供一层展柜：黄铜细边的标题牌 + 内嵌舞台 + 底部木牌式元信息。 */
+
+.preview-frame {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.25s ease;
+}
+
+.preview-frame:hover {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  box-shadow: var(--shadow-md);
+}
+
+/* ─── 标题牌 ─── */
+.preview-frame__chrome {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, var(--bg-card-hover), var(--bg-card));
+}
+
+.preview-frame__dots {
+  display: inline-flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.preview-frame__dots i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--border);
+}
+
+.preview-frame__dots i:first-child {
+  background: color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+.preview-frame__title {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─── 预览/源码切换 ─── */
+.preview-frame__toggle {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  flex-shrink: 0;
+}
+
+.preview-frame__toggle-btn {
+  padding: 3px 10px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.preview-frame__toggle-btn:hover {
+  color: var(--text);
+}
+
+.preview-frame__toggle-btn.is-active {
+  background: var(--accent-gradient);
+  color: #fff;
+}
+
+/* ─── 嵌在卡片里的紧凑形态（bare）───
+   去掉外框与标题牌，避免"卡片一层边框 + 展台一层边框"的双层嵌套；
+   列表仅保留画面，放大窗口提供源码操作。 */
+.preview-frame--bare {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.preview-frame--bare:hover {
+  border: none;
+  box-shadow: none;
+}
+
+/* 卡片里的画面：不描边，只留一层极浅的底，让生成组件的假浏览器外壳成为唯一"窗口" */
+.preview-frame--bare .preview-frame__stage {
+  border: none;
+  border-radius: 10px;
+  padding: 0;
+  background: var(--bg-card-hover);
+  /* 保留传入的预览高度，长作品在舞台内滚动，避免撑高整个列表。 */
+  overflow: auto;
+  overscroll-behavior: contain;
+  flex-shrink: 0;
+  min-height: 0;
+}
+
+/* 画面即作品本身：卡片里不保留假浏览器的地址栏那一行
+   —— 那行是详情页"可交互沙箱"的说明，缩到卡片尺度只会变成噪音 */
+.preview-frame--bare .snapui-fake-browser {
+  border: none;
+  border-radius: 0;
+}
+
+.preview-frame--bare .snapui-fake-browser__bar {
+  display: none;
+}
+
+.preview-frame--bare .snapui-fake-browser__content {
+  padding: 10px;
+}
+
+.work-thumbnail {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  contain: layout paint;
+}
+
+.work-thumbnail__canvas {
+  position: absolute;
+  top: 0;
+  transform-origin: top left;
+  display: flow-root;
+}
+
+/* ─── 舞台 ─── */
+.preview-frame__stage {
+  position: relative;
+  overflow: auto;
+  padding: 12px;
+  background:
+    radial-gradient(circle at 12% 0%, var(--accent-glow), transparent 55%),
+    var(--bg);
+}
+
+/* 生成组件基于视口单位排版时可能超出卡片，这里限制最大高度并提供滚动 */
+.preview-frame__stage > * {
+  min-height: 100%;
+}
+
+/* ─── 未编译时的骨架 ─── */
+.preview-frame__pending {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+}
+
+.preview-frame__pending-bar {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--bg-card-hover), var(--border), var(--bg-card-hover));
+  background-size: 200% 100%;
+  animation: preview-frame-shimmer 1.4s ease-in-out infinite;
+}
+
+.preview-frame__pending-bar--short {
+  width: 55%;
+}
+
+@keyframes preview-frame-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+/* ─── 木牌式元信息 ─── */
+.preview-frame__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-card);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.preview-frame__hint {
+  opacity: 0.65;
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+/* 源码行数：展台木牌左侧的规格说明 */
+.preview-frame__lines {
+  flex-shrink: 0;
+}

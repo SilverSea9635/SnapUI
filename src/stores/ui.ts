@@ -14,7 +14,11 @@ interface UIState {
 
   toggleTheme: () => void;
   setTheme: (theme: Theme) => void;
-  showToast: (type: Toast['type'], message: string, duration?: number) => void;
+  showToast: (
+    type: Toast['type'],
+    message: string,
+    duration?: number
+  ) => void;
   hideToast: () => void;
 }
 
@@ -48,7 +52,11 @@ export const useUIStore = create<UIState>((set) => ({
     set({ theme });
   },
 
-  showToast: (type, message, duration = 3000) => {
+  showToast: (
+    type,
+    message,
+    duration = 3000
+  ) => {
     const id = ++toastId;
     set({ toast: { id, type, message } });
     setTimeout(() => {

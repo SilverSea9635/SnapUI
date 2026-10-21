@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { LivePreview } from '@/components/Chat/LivePreview.tsx';
-import { useAuthStore, useCreditsStore } from '@/stores';
+import './Home.css';
 
-const TAGLINE = '一帧截图，一个组件';
 
 const EXAMPLES = [
   {
@@ -111,157 +110,53 @@ const SCENARIOS = [
   }
 ] as const;
 
-const SIGNIN_REWARDS = [
-  { day: 1, reward: 5 },
-  { day: 2, reward: 5 },
-  { day: 3, reward: 5 },
-  { day: 4, reward: 10 },
-  { day: 5, reward: 10 },
-  { day: 6, reward: 10 },
-  { day: 7, reward: 20 },
-] as const;
-
-function useTypingEffect(text: string, speed = 120, startDelay = 1000) {
-  const [displayed, setDisplayed] = useState('');
-  const [done, setDone] = useState(false);
-
-  useEffect(() => {
-    let i = 0;
-    let timeout: ReturnType<typeof setTimeout>;
-
-    const start = setTimeout(() => {
-      const tick = () => {
-        if (i < text.length) {
-          setDisplayed(text.slice(0, i + 1));
-          i++;
-          timeout = setTimeout(tick, speed);
-        } else {
-          setDone(true);
-        }
-      };
-      tick();
-    }, startDelay);
-
-    return () => {
-      clearTimeout(start);
-      clearTimeout(timeout);
-    };
-  }, [text, speed, startDelay]);
-
-  return { displayed, done };
-}
-
 function Home() {
-  const { displayed, done } = useTypingEffect(TAGLINE, 140, 1200);
-  const user = useAuthStore((s) => s.user);
-  const balance = useCreditsStore((s) => s.balance);
+  const navigate = useNavigate();
+  const [prompt, setPrompt] = useState('');
+  const [active, setActive] = useState(0);
+  const [view, setView] = useState<'preview' | 'code'>('preview');
 
   return (
-    <>
-      {/* ─── Hero ─── */}
-      <section className="hero">
-        <div className="hero__badge">
-          <span className="hero__badge-dot" />
-          AI-Powered Component Generator
+    <main className="studio-home">
+      <section className="studio-hero">
+        <div className="studio-intro">
+          <div className="studio-eyebrow"><span /> 你的下一件作品，从这里开始</div>
+          <h1>让灵感成形。<br /><span>让创作，更简单。</span></h1>
+          <p className="studio-description">一句描述，一张截图。把脑海中的想法变成可以交互的 React 组件，在每一次预览中，离理想的设计更近一步。</p>
+          <form className="idea-box" onSubmit={e => { e.preventDefault(); if (prompt.trim()) navigate('/chat', { state: { prompt: prompt.trim() } }); }}>
+            <label htmlFor="idea-prompt">你想创造什么？</label>
+            <textarea id="idea-prompt" value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="例如：一个简洁的任务管理面板，带进度统计…" rows={2} required />
+            <div className="idea-box__bottom"><span>✧ 从想法到组件</span><button type="submit">开始创作 <span>↗</span></button></div>
+          </form>
+          <div className="starter-ideas"><span>试试：</span>{EXAMPLES.map(ex => <button key={ex.title} onClick={() => setPrompt(ex.prompt)}>{ex.title} ↗</button>)}</div>
+          <div className="studio-note"><span className="note-icon">✓</span> 实时预览 <span className="note-icon">✓</span> 可编辑代码 <span className="note-icon">✓</span> 灵感持续复用</div>
         </div>
-
-        <h1 className="hero__title">
-          从截图到<em>组件</em>
-        </h1>
-
-        <p className="hero__tagline">
-          <span className="hero__tagline-text">{displayed}</span>
-          {!done && <span className="hero__tagline-cursor" />}
-        </p>
-
-        <p className="hero__subtitle">
-          上传一张 UI 截图，AI 自动生成可运行的 React 组件。
-          <br />
-          实时编译，即时预览，零配置开箱即用。
-        </p>
-
-        <div className="hero__actions">
-          <Link className="hero__btn hero__btn--primary" to="/quick-start">
-            开始使用
-          </Link>
-          <a className="hero__btn hero__btn--ghost" href="#scenarios">
-            了解更多
-          </a>
-        </div>
-
-        <div className="hero__divider" />
-      </section>
-
-      {/* ─── Scenarios ─── */}
-      <section className="scenarios" id="scenarios">
-        <header className="scenarios__header">
-          <p className="scenarios__label">落地场景</p>
-          <h2 className="scenarios__title">三件事，一张截图就够了</h2>
-        </header>
-
-        <div className="scenarios__grid">
-          {SCENARIOS.map((s) => (
-            <article className="scenario-card" key={s.number}>
-              <p className="scenario-card__number">{s.number}</p>
-              <h3 className="scenario-card__title">{s.title}</h3>
-              <p className="scenario-card__desc">{s.desc}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* ─── Showcase ─── */}
-      <section className="showcase" id="showcase">
-        <header className="showcase__header">
-          <p className="showcase__label">效果展示</p>
-          <h2 className="showcase__title">看看 AI 能生成什么</h2>
-        </header>
-        <div className="showcase__grid">
-          {EXAMPLES.map((ex, i) => (
-            <article className="showcase-card" key={i}>
-              <div className="showcase-card__preview">
-                <LivePreview code={ex.code} />
-              </div>
-              <div className="showcase-card__body">
-                <h3 className="showcase-card__title">{ex.title}</h3>
-                <p className="showcase-card__desc">{ex.desc}</p>
-                <Link className="showcase-card__action" to="/chat" state={{ prompt: ex.prompt }}>
-                  试试这个
-                </Link>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* ─── Sign-in Rewards ─── */}
-      <section className="signin-rewards">
-        <header className="signin-rewards__header">
-          <p className="signin-rewards__label">每日签到</p>
-          <h2 className="signin-rewards__title">签到领积分，免费生成组件</h2>
-        </header>
-
-        {user && (
-          <p className="signin-rewards__balance">
-            当前积分：<strong>{balance}</strong>
-          </p>
-        )}
-
-        <div className="signin-rewards__grid">
-          {SIGNIN_REWARDS.map((item) => (
-            <div className="signin-rewards__day" key={item.day}>
-              <span className="signin-rewards__day-num">第{item.day}天</span>
-              <span className="signin-rewards__day-reward">{item.reward}</span>
-              <span className="signin-rewards__day-unit">积分</span>
+        <div className="studio-demo">
+          <div className="demo-caption"><span>灵感 → 代码 → 你的作品</span><span>LIVE PLAYGROUND</span></div>
+          <div className="demo-window">
+            <div className="demo-toolbar"><div className="window-dots"><i /><i /><i /></div><span>component.tsx</span><span className="demo-status">● 实时预览</span></div>
+            <div className="demo-tabs"><div>{EXAMPLES.map((
+              ex,
+              i
+            ) => <button key={ex.title} className={active === i ? 'is-active' : ''} onClick={() => setActive(i)}>{ex.title}</button>)}
+                                       </div><button className="code-toggle" onClick={() => setView(view === 'preview' ? 'code' : 'preview')}>{view === 'preview' ? '〈/〉 代码' : '◫ 预览'}</button>
             </div>
-          ))}
+            <div className="demo-canvas">{view === 'preview' ? <><div className="canvas-label">INTERACTIVE COMPONENT</div><LivePreview code={EXAMPLES[active].code} /><div className="canvas-hint">点击组件，体验真实交互</div></> : <pre className="demo-code"><code>{EXAMPLES[active].code}</code></pre>}</div>
+            <div className="demo-message"><span className="ai-mark">✧</span><div><strong>你的灵感，已经准备就绪</strong><p>继续描述，让每一个细节都恰到好处。</p></div><Link to="/chat" state={{ prompt: EXAMPLES[active].prompt }} aria-label="使用当前示例开始创作">↗</Link></div>
+          </div>
+          <div className="demo-footnote"><span>REACT + TSX</span><span>为创造者而设计 ✦</span></div>
         </div>
-
-        <p className="signin-rewards__info">
-          每次 AI 生成消耗 5 积分 &middot; 7 天为一个签到周期，循环往复
-        </p>
       </section>
-    </>
+      <section className="workflow" id="scenarios">
+        <div className="section-heading"><div><p className="section-kicker">LESS FRICTION. MORE CREATION.</p><h2>从一个想法，到无限可能</h2></div><p>把重复的工作交给 AI，<br />把时间留给更好的想法。</p></div>
+        <div className="workflow-grid">{SCENARIOS.map((
+          s,
+          i
+        ) => <article key={s.number}><div className="workflow-top"><span className="workflow-icon">{['◈', '◫', '↗'][i]}</span><span>{s.number} /</span></div><h3>{s.title}</h3><p>{s.desc}</p></article>)}
+        </div>
+      </section>
+      <section className="explore-banner"><div><p className="section-kicker">MADE TO BE REMIXED</p><h2>好设计，值得成为新的起点。</h2><p>发现社区里的精彩组件，收藏、引用，再加入你自己的想法。</p></div><Link to="/gallery">探索作品广场 <span>↗</span></Link></section>
+    </main>
   );
 }
 

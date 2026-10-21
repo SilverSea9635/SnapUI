@@ -101,10 +101,22 @@
 
 .chat__message--user .chat__avatar {
   background: var(--chat-accent);
+  flex-shrink: 0;
+  overflow: hidden;
 }
 
 .chat__message--ai .chat__avatar {
-  background: var(--text-secondary);
+  width: 31px;
+  height: 31px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  background: var(--accent);
+  color: #fff;
+  font-family: Arial, sans-serif;
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0;
 }
 
 .chat__bubble {
@@ -122,6 +134,115 @@
 
 .chat__message--user .chat__bubble {
   background: var(--chat-user-bg);
+}
+
+/* ─── 引用调整标记：贴着气泡顶部说明这轮改的是哪件作品 ─── */
+.chat__reference-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: start;
+  max-width: 100%;
+  padding: 4px 10px;
+  border-left: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius: 0 6px 6px 0;
+  background: var(--accent-glow);
+  color: var(--accent);
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+}
+
+.chat__reference-chip:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+/* ─── 引用产出已落库：提醒用户确认发布 ─── */
+.chat__saved-work {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+  padding: 8px 11px;
+  border: 1px dashed color-mix(in srgb, var(--accent) 50%, var(--border));
+  border-radius: 10px;
+  background: var(--accent-glow);
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.chat__saved-work.is-published {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+.chat__saved-work__mark {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--accent-gradient);
+  color: #fff;
+  font-size: 10px;
+}
+
+.chat__saved-work__text {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.chat__saved-work__link,
+.chat__saved-work__publish {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 11px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.chat__saved-work__link:hover,
+.chat__saved-work__publish:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.chat__saved-work__publish {
+  border-color: transparent;
+  background: var(--accent-gradient);
+  color: #fff;
+  font-weight: 500;
+}
+
+.chat__saved-work__publish:hover {
+  color: #fff;
+  opacity: 0.92;
+}
+
+/* 发布按钮：未发布时用实心强调，已发布回到描边 */
+.chat__code-btn--publish {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.chat__code-btn--publish.is-published {
+  color: var(--text-secondary);
+  border-color: var(--chat-border, var(--border));
 }
 
 .chat__message--ai .chat__bubble {
@@ -226,7 +347,7 @@
 }
 
 .chat__send-button {
-  margin-left: auto;
+  margin-left: 0;
   background: var(--chat-accent);
   color: #fff;
 }
@@ -239,7 +360,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-left: auto;
+  margin-left: 0;
   min-width: 96px;
   border: 0;
   border-radius: 999px;
@@ -619,3 +740,64 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* ─── Model Picker ─── */
+.chat__model-picker {
+  margin-left: auto;
+  max-width: min(280px, 100%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: var(--bg-card-hover);
+  border: 1px solid var(--border);
+  transition: background 0.35s ease, border-color 0.35s ease;
+}
+
+.chat__model-label {
+  font-size: 12px;
+  color: var(--chat-muted);
+  white-space: nowrap;
+}
+
+.chat__model-select {
+  min-width: 0;
+  max-width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--chat-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  padding: 4px 0;
+}
+
+.chat__model-select:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+/* 空会话的快捷起点与输入框共用创作界面。 */
+.chat__welcome:has(.chat__starters) { align-content: center; min-height: 0; border: none; background: transparent; padding: 24px; }
+.chat__starters { width: min(680px, 100%); margin-top: 12px; }
+.chat__starter-guide { color: var(--chat-muted); font-size: 12px; line-height: 1.8; margin-bottom: 16px; }
+.chat__starter-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.chat__starter { display: flex; flex-direction: column; gap: 8px; padding: 16px; text-align: left; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-card); color: var(--chat-text); font: inherit; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+.chat__starter strong { font-size: 14px; font-weight: 600; }
+.chat__starter span { font-size: 12px; line-height: 1.6; color: var(--chat-muted); }
+.chat__starter:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-glow); }
+.chat__starter:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.chat__starter-hint { margin-top: 16px; font-size: 12px; color: var(--chat-muted); line-height: 1.8; }
+.chat__starter-hint a { color: var(--accent); }
+@media (max-width: 640px) {
+  .chat__starter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chat__welcome:has(.chat__starters) { padding: 16px 0; }
+  .chat__starter { padding: 12px; }
+}
+
+.chat__image-block { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.chat__image-unavailable, .chat__upload-status { font-size: 13px; color: var(--chat-muted); padding: 8px 0; }
+.chat__image-refresh { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--chat-muted); }
+.chat__image-refresh input { accent-color: var(--accent); }

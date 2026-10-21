@@ -1,0 +1,70 @@
+/* ─── 导航栏搜索（GitHub 风格）─── */
+
+.nav-search {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: clamp(150px, 15vw, 190px);
+  height: 30px;
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  transition: width 0.24s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+/* 广场页是搜索的主场，给它更宽的位置 */
+.nav-search--wide {
+  width: clamp(200px, 22vw, 280px);
+}
+
+.nav-search:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.nav-search__input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  outline: none;
+}
+
+.nav-search__input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.75;
+}
+
+.nav-search__clear {
+  display: none;
+  flex-shrink: 0;
+  padding: 0 2px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* 输入框为空时（显示 placeholder）隐藏清除按钮，无需 JS 状态参与 */
+.nav-search__input:not(:placeholder-shown) ~ .nav-search__clear {
+  display: block;
+}
+
+.nav-search__clear:hover {
+  color: var(--accent);
+}
+
+/* 窄屏：导航项本身会换行，搜索框占满一行 */
+@media (max-width: 720px) {
+  .nav-search,
+  .nav-search--wide {
+    width: 100%;
+  }
+}

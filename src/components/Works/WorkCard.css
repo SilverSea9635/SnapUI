@@ -1,0 +1,260 @@
+/* ─── 作品卡片（广场 / 我的作品 / 我的收藏 共用）───
+   设计取向：卡片不再是"盒子里再套盒子"。它是一张展签——顶部是作品画面，
+   下面是编号、标题、标签、署名。边界感交给统一的网格间距，而不是逐卡描边。 */
+
+.work-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding-bottom: 2px;
+}
+
+/* ─── 画面 ─── */
+.work-card__preview {
+  min-width: 0;
+  position: relative;
+}
+
+.work-card__expand {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  cursor: zoom-in;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 10px;
+}
+
+.work-card__expand span {
+  padding: 4px 9px;
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  color: var(--text);
+  font-size: 12px;
+  border: 1px solid var(--border);
+}
+
+.work-card__expand:hover span,
+.work-card__expand:focus-visible span {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.work-card__plain {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  height: 84px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--bg-card);
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.work-card__plain:hover {
+  background: var(--bg-card-hover);
+}
+
+.work-card__plain-mark {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+.work-card__plain-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.work-card__plain-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* ─── 文字区 ─── */
+.work-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  padding: 0 4px;
+}
+
+.work-card__head {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+}
+
+.work-card__no {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  opacity: 0.85;
+}
+
+.work-card__title {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.4;
+  color: var(--text);
+  text-decoration: none;
+  /* 标题锁一行：折行会让相邻卡片的署名行错位，破坏网格的横向节奏 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+
+.work-card__title:hover {
+  color: var(--accent);
+}
+
+.work-card__desc {
+  /* 固定两行高度：描述长短不一时，下面标签与署名仍能对齐 */
+  min-height: 2lh;
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ─── 收藏星标：常显计数 + 已收藏时高亮（不再有斜向印章与旋转动画）─── */
+.work-card__stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  align-self: center;
+  padding: 2px 7px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: color 0.16s ease, border-color 0.16s ease;
+}
+
+.work-card__stamp:hover {
+  color: var(--accent);
+  border-color: var(--border);
+}
+
+.work-card__stamp.is-on {
+  color: var(--accent);
+  background: var(--accent-glow);
+}
+
+/* ─── 标签 ─── */
+.work-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+}
+
+.work-card__tag {
+  padding: 2px 8px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--accent-glow);
+  color: var(--accent);
+  font-family: var(--font-body);
+  font-size: 11px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.work-card__tag:hover {
+  border-color: var(--accent);
+  background: transparent;
+}
+
+/* ─── 署名与时间 ─── */
+.work-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 1px;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.work-card__author {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.work-card__avatar {
+  display: grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--accent-gradient);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.work-card__time {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+}
+
+/* ─── 引用血缘 ─── */
+.work-card__lineage {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-left: 2px solid color-mix(in srgb, var(--accent) 50%, transparent);
+  border-radius: 0 6px 6px 0;
+  background: var(--accent-glow);
+  color: var(--text-secondary);
+  font-size: 11px;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+
+.work-card__lineage:hover {
+  color: var(--accent);
+}
+
+.work-card__lineage-mark {
+  font-family: var(--font-mono);
+  color: var(--accent);
+}

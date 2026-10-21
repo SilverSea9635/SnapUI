@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { get as httpGet, post, put } from '@/Utils/request';
-import { hashPassword } from '@/Utils';
+import { get as httpGet, post, put } from '@/utils/request';
+import { hashPassword } from '@/utils';
+import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '@/utils/token';
 
 interface User {
   id: number;
@@ -18,32 +19,54 @@ interface AuthState {
   isLoading: boolean;
   error: string | null;
 
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (email: string, password: string, nickname: string) => Promise<boolean>;
+  login: (
+    email: string,
+    password: string
+  ) => Promise<boolean>;
+  register: (
+    email: string,
+    password: string,
+    nickname: string
+  ) => Promise<boolean>;
   logout: () => void;
   fetchUser: () => Promise<void>;
   updateProfile: (fields: { nickname?: string; avatar?: string }) => Promise<boolean>;
-  changePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
+  uploadAvatar: (
+    data: string,
+    mimeType: string
+  ) => Promise<void>;
+  changePassword: (
+    currentPassword: string,
+    newPassword: string
+  ) => Promise<boolean>;
   forgotPassword: (email: string) => Promise<boolean>;
-  resetPassword: (email: string, code: string, newPassword: string) => Promise<boolean>;
+  resetPassword: (
+    email: string,
+    code: string,
+    newPassword: string
+  ) => Promise<boolean>;
   setToken: (token: string) => void;
-  refreshAccessToken: () => Promise<boolean>;
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
+export const useAuthStore = create<AuthState>((
+  set,
+  get
+) => ({
   user: null,
-  token: localStorage.getItem('snapui-token'),
-  refreshToken: localStorage.getItem('snapui-refresh-token'),
+  token: getAccessToken(),
+  refreshToken: getRefreshToken(),
   isLoading: false,
   error: null,
 
-  login: async (email, password) => {
+  login: async (
+    email,
+    password
+  ) => {
     set({ isLoading: true, error: null });
     try {
       const hashed = await hashPassword(password);
       const { token, refreshToken, user } = await post<{ token: string; refreshToken?: string; user: User }>('/api/auth/login', { email, password: hashed });
-      localStorage.setItem('snapui-token', token);
-      if (refreshToken) localStorage.setItem('snapui-refresh-token', refreshToken);
+      setTokens(token, refreshToken);
       set({ token, refreshToken: refreshToken ?? get().refreshToken, user, isLoading: false });
       return true;
     } catch (err) {
@@ -52,13 +75,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  register: async (email, password, nickname) => {
+  register: async (
+    email,
+    password,
+    nickname
+  ) => {
     set({ isLoading: true, error: null });
     try {
       const hashed = await hashPassword(password);
       const { token, refreshToken, user } = await post<{ token: string; refreshToken?: string; user: User }>('/api/auth/register', { email, password: hashed, nickname });
-      localStorage.setItem('snapui-token', token);
-      if (refreshToken) localStorage.setItem('snapui-refresh-token', refreshToken);
+      setTokens(token, refreshToken);
       set({ token, refreshToken: refreshToken ?? get().refreshToken, user, isLoading: false });
       return true;
     } catch (err) {
@@ -68,8 +94,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: () => {
-    localStorage.removeItem('snapui-token');
-    localStorage.removeItem('snapui-refresh-token');
+    clearTokens();
     set({ user: null, token: null, refreshToken: null, error: null });
   },
 
@@ -94,7 +119,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  changePassword: async (currentPassword, newPassword) => {
+  uploadAvatar: async (
+    data,
+    mimeType
+  ) => {
+    const token = get().token;
+    const user = await post<User>('/api/auth/avatar', { data, mimeType });
+    if (get().token === token && get().user?.id === user.id) set({ user });
+  },
+
+  changePassword: async (
+    currentPassword,
+    newPassword
+  ) => {
     set({ isLoading: true, error: null });
     try {
       const hashedCurrent = await hashPassword(currentPassword);
@@ -120,7 +157,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  resetPassword: async (email, code, newPassword) => {
+  resetPassword: async (
+    email,
+    code,
+    newPassword
+  ) => {
     set({ isLoading: true, error: null });
     try {
       const hashed = await hashPassword(newPassword);
@@ -134,27 +175,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   setToken: (token) => {
-    localStorage.setItem('snapui-token', token);
+    setTokens(token);
     set({ token });
   },
-
-  refreshAccessToken: async () => {
-    const { refreshToken } = get();
-    if (!refreshToken) return false;
-    try {
-      const { token, refreshToken: newRefreshToken } = await post<{ token: string; refreshToken?: string }>('/api/auth/refresh', { refreshToken });
-      localStorage.setItem('snapui-token', token);
-      if (newRefreshToken) localStorage.setItem('snapui-refresh-token', newRefreshToken);
-      set({ token, refreshToken: newRefreshToken ?? refreshToken });
-      return true;
-    } catch {
-      get().logout();
-      return false;
-    }
-  },
 }));
-
-/** Standalone refresh function for use outside React components (e.g. axios interceptor) */
-export async function refreshAccessToken(): Promise<boolean> {
-  return useAuthStore.getState().refreshAccessToken();
-}

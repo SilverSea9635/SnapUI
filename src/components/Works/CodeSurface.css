@@ -1,0 +1,51 @@
+/* ─── 代码展示面 ─── */
+.code-surface {
+  position: relative;
+  height: 100%;
+  background: #0d1117;
+  color: #c9d1d9;
+  overflow: hidden;
+}
+
+.code-surface__pre {
+  margin: 0;
+  padding: 16px 18px;
+  overflow: auto;
+  height: 100%;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.65;
+  tab-size: 2;
+}
+
+.code-surface__pre code {
+  font-family: inherit;
+  background: none;
+  padding: 0;
+}
+
+.code-surface__copy {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  background: rgba(13, 17, 23, 0.86);
+  color: #c9d1d9;
+  font-family: var(--font-body);
+  font-size: 11px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.code-surface__copy:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.code-surface__copy[data-copied='true'] {
+  border-color: #3fb950;
+  color: #3fb950;
+}

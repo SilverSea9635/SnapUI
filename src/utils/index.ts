@@ -1,10 +1,4 @@
-export { API_BASE, default as axiosInstance, get, post, put, del } from './request';
-
-export function delay(ms: number) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-}
+export { API_BASE, default as axiosInstance, get, post, put, patch, del } from './request';
 
 export async function hashPassword(password: string): Promise<string> {
   const data = new TextEncoder().encode(password);

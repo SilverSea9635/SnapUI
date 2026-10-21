@@ -1,4 +1,5 @@
 import { useUIStore } from '@/stores';
+import './Toast.css';
 
 function Toast() {
   const toast = useUIStore((s) => s.toast);

@@ -1,7 +1,10 @@
+import { UserAvatar } from '@/components/UserAvatar';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Chat } from '@/components/Chat/Chat.tsx';
-import { useChat, fetchConversations, createConversationApi } from '@/hooks/useChat.ts';
+import { Chat, type ChatComposePayload } from '@/components/Chat/Chat.tsx';
+import { CodeSurface } from '@/components/Works/CodeSurface.tsx';
+import { useChat } from '@/hooks/useChat.ts';
+import { fetchConversations, createConversationApi } from '@/hooks/chatApi.ts';
 import { useAuthStore, useUIStore } from '@/stores';
 import './ChatPage.css';
 
@@ -11,34 +14,62 @@ type Conversation = {
   createdAt: string;
 };
 
+/** 从作品广场带过来的「引用调整」上下文 */
+type ReferenceContext = {
+  workId: number;
+  title: string;
+  author: string;
+  code: string;
+};
+
 function ChatPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
   const theme = useUIStore((s) => s.theme);
   const toggleTheme = useUIStore((s) => s.toggleTheme);
+  const showToast = useUIStore((s) => s.showToast);
   const logout = useAuthStore((s) => s.logout);
 
-  const { messages, isSending, sendMessage, stopGenerating, reset, loadConversation, deleteConversation } = useChat();
+  const { messages, isSending, sendMessage, stopGenerating, reset, loadConversation, deleteConversation, publishWork } = useChat();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConvoId, setCurrentConvoId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [reference, setReference] = useState<ReferenceContext | null>(null);
+  const [referenceCodeOpen, setReferenceCodeOpen] = useState(false);
 
-  const state = location.state as { prompt?: string; conversationId?: string } | null;
+  const state = location.state as
+    | { prompt?: string; conversationId?: string; reference?: ReferenceContext }
+    | null;
 
   const promptSentRef = useRef(false);
   const historyLoadedRef = useRef(false);
+  const referenceConsumedRef = useRef(false);
 
   // Load conversation list from server on mount
   useEffect(() => {
-    fetchConversations()
+    fetchConversations(1, 30)
       .then((data) => {
         setConversations(data.conversations || []);
       })
       .catch(() => {});
   }, []);
 
-  // Send initial prompt from QuickStart — proactively create conversation first
+  // 引用模式：从作品详情页带着源码进来，开一段新对话等用户描述要怎么改
+  useEffect(() => {
+    if (!state?.reference || referenceConsumedRef.current) return;
+    referenceConsumedRef.current = true;
+
+    const incoming = state.reference;
+    reset();
+    setCurrentConvoId(null);
+    setReference(incoming);
+    setReferenceCodeOpen(false);
+    navigate(location.pathname, { replace: true, state: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 处理首页示例等入口携带的提示词，先创建会话再发送
   useEffect(() => {
     if (state?.prompt && !promptSentRef.current) {
       promptSentRef.current = true;
@@ -76,36 +107,53 @@ function ChatPage() {
   const handleNewChat = () => {
     reset();
     setCurrentConvoId(null);
+    setReference(null);
   };
 
   const refreshConversations = () => {
-    fetchConversations()
+    fetchConversations(1, 30)
       .then((data) => {
         setConversations(data.conversations || []);
       })
       .catch(() => {});
   };
 
-  const handleSendMessage = (payload: { text: string; imageDataUrl?: string; media_type?: string }) => {
+  const handleSendMessage = (payload: ChatComposePayload) => {
+    const outgoing = {
+      ...payload,
+      referenceWorkId: reference?.workId,
+      referenceTitle: reference?.title,
+    };
+
     if (currentConvoId) {
-      sendMessage(payload, currentConvoId);
+      sendMessage(outgoing, currentConvoId);
       setTimeout(refreshConversations, 1000);
-    } else {
-      // Create conversation on the server first, then send the message
-      const title = payload.text?.slice(0, 50) || '';
-      createConversationApi(title)
-        .then(({ conversationId }) => {
-          setCurrentConvoId(conversationId);
-          sendMessage(payload, conversationId);
-          refreshConversations();
-        })
-        .catch(() => {
-          // Fallback: use temp ID
-          const tempId = Date.now().toString();
-          setCurrentConvoId(tempId);
-          sendMessage(payload, tempId);
-          setTimeout(refreshConversations, 1000);
-        });
+      return;
+    }
+
+    // Create conversation on the server first, then send the message
+    const titleBase = reference ? `引用：${reference.title}` : payload.text;
+    createConversationApi((titleBase || '').slice(0, 50))
+      .then(({ conversationId }) => {
+        setCurrentConvoId(conversationId);
+        sendMessage(outgoing, conversationId);
+        refreshConversations();
+      })
+      .catch(() => {
+        // Fallback: use temp ID
+        const tempId = Date.now().toString();
+        setCurrentConvoId(tempId);
+        sendMessage(outgoing, tempId);
+        setTimeout(refreshConversations, 1000);
+      });
+  };
+
+  // AI 产出了新的组件 → 引用上下文已经完成使命，清掉提示条
+  const handleLastCodeChange = (code: string | null) => {
+    if (!reference || !code) return;
+    if (code.trim() !== reference.code.trim()) {
+      setReference(null);
+      setReferenceCodeOpen(false);
     }
   };
 
@@ -113,6 +161,7 @@ function ChatPage() {
     if (id === currentConvoId) return;
     loadConversation(id);
     setCurrentConvoId(id);
+    setReference(null);
   };
 
   const handleDeleteConvo = async (id: string) => {
@@ -127,6 +176,19 @@ function ChatPage() {
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  // 引用产出的作品默认只存不公开，用户在这里手动确认发布（或撤回）
+  const handlePublishWork = async (
+    workId: number,
+    isPublic: boolean
+  ) => {
+    try {
+      await publishWork(workId, isPublic);
+      showToast('success', isPublic ? '已发布到作品广场' : '已撤回，改为仅自己可见');
+    } catch {
+      showToast('error', isPublic ? '发布失败，请稍后重试' : '撤回失败，请稍后重试');
+    }
   };
 
   return (
@@ -178,10 +240,15 @@ function ChatPage() {
           )}
         </div>
 
+        <Link className="chat-sidebar__history-link" to="/history">查看全部对话 →</Link>
+
         <div className="chat-sidebar__footer">
           <Link to="/profile" className="chat-sidebar__user">
             <div className="chat-sidebar__avatar">
-              {user?.nickname?.[0]?.toUpperCase() || 'U'}
+              <UserAvatar
+                avatar={user?.avatar}
+                nickname={user?.nickname}
+              />
             </div>
             <div className="chat-sidebar__user-info">
               <span className="chat-sidebar__username">{user?.nickname || '用户'}</span>
@@ -190,7 +257,8 @@ function ChatPage() {
           </Link>
           <div className="chat-sidebar__footer-actions">
             <button className="chat-sidebar__icon-btn" onClick={toggleTheme} type="button"
-              aria-label={theme === 'light' ? '暗色模式' : '亮色模式'}>
+              aria-label={theme === 'light' ? '暗色模式' : '亮色模式'}
+            >
               {theme === 'light' ? (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                   <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
@@ -234,16 +302,62 @@ function ChatPage() {
 
       {/* ─── Main Chat ─── */}
       <main className="chat-main">
+        {reference ? (
+          <>
+            <div className="chat-reference">
+              <span className="chat-reference__mark" aria-hidden="true">↳</span>
+              <span className="chat-reference__body">
+                <span className="chat-reference__title">正在引用 {reference.author}《{reference.title}》</span>
+                <span className="chat-reference__hint">
+                  描述你要改的地方（配色、布局、文案都行），产出的新组件会自动记到你的作品里。
+                </span>
+              </span>
+              <button
+                className="chat-reference__toggle"
+                onClick={() => setReferenceCodeOpen((v) => !v)}
+                type="button"
+              >
+                {referenceCodeOpen ? '收起源码' : '看源码'}
+              </button>
+              <button
+                className="chat-reference__close"
+                onClick={() => { setReference(null); setReferenceCodeOpen(false); }}
+                type="button"
+                aria-label="取消引用"
+                title="取消引用"
+              >
+                ×
+              </button>
+            </div>
+            {referenceCodeOpen ? (
+              <div className="chat-reference__code">
+                <CodeSurface code={reference.code} maxHeight={260} />
+              </div>
+            ) : null}
+          </>
+        ) : null}
+
         <Chat
           messages={messages}
+          sessionKey={currentConvoId || 'new'}
           onSendMessage={handleSendMessage}
           onStop={stopGenerating}
           disabled={isSending}
           isSending={isSending}
-          active={messages.length > 0}
-          welcomeText="我是 SnapUI，专注于将想法变为组件"
-          welcomeDescription="上传一张截图、粘贴一段设计稿，或用一句话描述你要的组件，我来生成可运行的代码。"
-          inputPlaceholder="描述你想要的组件，或上传截图，按 Enter 发送"
+          active
+          referenceMode={Boolean(reference)}
+          onLastCodeChange={handleLastCodeChange}
+          onPublishWork={handlePublishWork}
+          showStarterPrompts
+          welcomeText={reference ? `引用《${reference.title}》，告诉我你想改什么` : '我是 SnapUI，专注于将想法变为组件'}
+          welcomeDescription={
+            reference
+              ? '例如：把主色换成墨绿、卡片改成两列、标题字号加大一档。我会在原组件基础上改，不会从零重写。'
+              : '上传一张截图、粘贴一段设计稿，或用一句话描述你要的组件，我来生成可运行的代码。'
+          }
+          inputPlaceholder={
+            reference ? '描述要调整的地方，按 Enter 发送' : '描述你想要的组件，或上传截图，按 Enter 发送'
+          }
         />
       </main>
     </div>

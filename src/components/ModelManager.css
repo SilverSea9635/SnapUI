@@ -1,0 +1,15 @@
+.model-manager { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 24px; }
+.model-manager__fields { border: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.model-manager__empty { padding: 32px 0; color: var(--text-secondary); font-size: 14px; line-height: 1.8; }
+.model-entry { padding: 20px 0; border-top: 1px solid var(--border); }
+.model-entry__heading { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.model-entry__heading h3 { font-size: 15px; color: var(--text); overflow-wrap: anywhere; }
+.model-entry__heading span { font-size: 11px; color: var(--accent); background: var(--accent-glow); border-radius: 6px; padding: 3px 8px; }
+.model-entry p { font-size: 13px; color: var(--text-secondary); line-height: 1.8; overflow-wrap: anywhere; }
+.model-entry__key { margin-top: 8px; font-family: var(--font-mono); }
+.model-entry__actions { display: flex; gap: 14px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+.model-entry__actions button:not(.auth-form__btn), .model-manager .auth-card__error button { border: none; background: transparent; color: var(--accent); font: inherit; font-size: 13px; cursor: pointer; padding: 4px 0; }
+.model-entry__actions button:disabled { opacity: 0.5; cursor: not-allowed; }
+.model-manager__default { display: flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 13px; }
+.model-manager__default input { accent-color: var(--accent); }
+@media (max-width: 700px) { .model-manager { grid-template-columns: minmax(0, 1fr); } }

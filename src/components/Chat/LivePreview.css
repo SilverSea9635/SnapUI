@@ -1,0 +1,74 @@
+/* ─── SnapUI fake-browser 外壳 ─── */
+/* 模拟浏览器窗口：前进/后退 + 地址栏 + 内容区，路由跳转只发生在内存 history 中 */
+
+.snapui-fake-browser {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-card);
+  font-size: 14px;
+}
+
+.snapui-fake-browser__bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.snapui-fake-browser__nav {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-card);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.snapui-fake-browser__nav:hover:not(:disabled) {
+  background: var(--bg-card-hover);
+}
+
+.snapui-fake-browser__nav:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.snapui-fake-browser__url {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.snapui-fake-browser__url input {
+  width: 100%;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-card);
+  color: var(--text);
+  font-size: 13px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  outline: none;
+}
+
+.snapui-fake-browser__url input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+.snapui-fake-browser__content {
+  padding: 12px;
+}

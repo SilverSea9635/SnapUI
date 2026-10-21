@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { get, post } from '@/Utils/request';
+import { get, post } from '@/utils/request';
 
 interface CreditPackage {
   id: string;
@@ -18,12 +18,6 @@ interface Transaction {
   createdAt: string;
 }
 
-interface SigninStatus {
-  signedToday: boolean;
-  consecutiveDays: number;
-  nextReward: number;
-}
-
 interface CreditsState {
   balance: number;
   packages: CreditPackage[];
@@ -33,17 +27,13 @@ interface CreditsState {
   isLoading: boolean;
   error: string | null;
 
-  // Sign-in
-  signedToday: boolean;
-  consecutiveDays: number;
-  nextReward: number;
-
   fetchBalance: () => Promise<void>;
-  deduct: (amount: number, description?: string) => Promise<boolean>;
+  deduct: (
+    amount: number,
+    description?: string
+  ) => Promise<boolean>;
   fetchPackages: () => Promise<void>;
   fetchTransactions: (page?: number) => Promise<void>;
-  fetchSigninStatus: () => Promise<void>;
-  signin: () => Promise<boolean>;
 }
 
 export const useCreditsStore = create<CreditsState>((set) => ({
@@ -55,10 +45,6 @@ export const useCreditsStore = create<CreditsState>((set) => ({
   isLoading: false,
   error: null,
 
-  signedToday: false,
-  consecutiveDays: 0,
-  nextReward: 5,
-
   fetchBalance: async () => {
     try {
       const { balance } = await get<{ balance: number }>('/api/credits/balance');
@@ -68,7 +54,10 @@ export const useCreditsStore = create<CreditsState>((set) => ({
     }
   },
 
-  deduct: async (amount, description = 'AI 组件生成') => {
+  deduct: async (
+    amount,
+    description = 'AI 组件生成'
+  ) => {
     set({ isLoading: true, error: null });
     try {
       const { balance } = await post<{ balance: number }>('/api/credits/deduct', { amount, description });
@@ -104,36 +93,6 @@ export const useCreditsStore = create<CreditsState>((set) => ({
       set({ transactions, transactionsTotal: res.total, transactionsPage: res.page, isLoading: false });
     } catch (err) {
       set({ error: (err as Error).message, isLoading: false });
-    }
-  },
-
-  fetchSigninStatus: async () => {
-    try {
-      const status = await get<SigninStatus>('/api/signin/status');
-      set({
-        signedToday: status.signedToday,
-        consecutiveDays: status.consecutiveDays,
-        nextReward: status.nextReward,
-      });
-    } catch {
-      // Silently fail — user may not be logged in
-    }
-  },
-
-  signin: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const result = await post<{ consecutiveDays: number; reward: number; balance: number }>('/api/signin');
-      set({
-        balance: result.balance,
-        signedToday: true,
-        consecutiveDays: result.consecutiveDays,
-        isLoading: false,
-      });
-      return true;
-    } catch (err) {
-      set({ error: (err as Error).message, isLoading: false });
-      return false;
     }
   },
 }));

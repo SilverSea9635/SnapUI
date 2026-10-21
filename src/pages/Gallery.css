@@ -1,0 +1,378 @@
+/* ─── 作品广场 ───
+   版面意图：像一间纸本展厅 —— 页首是展签，控制台是一条细线下的检索栏，
+   卡片区是错落陈列，顶部导航悬停其上时透出纸张质感。 */
+
+.gallery-page {
+  padding-bottom: 5rem;
+  animation: gallery-fade 0.45s ease both;
+}
+
+@keyframes gallery-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ─── 展签（左右对称 padding，不再为右上角控制带留空档）─── */
+.gallery-hero {
+  padding: clamp(5.5rem, 11vw, 8rem) clamp(1.25rem, 4vw, 3rem) clamp(1.25rem, 2.5vw, 2rem);
+  background:
+    radial-gradient(ellipse 70% 90% at 15% 0%, var(--glow-color), transparent 70%),
+    linear-gradient(180deg, var(--bg-card-hover), transparent);
+}
+
+.gallery-hero__inner {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+/* 页首主标题：视觉上仍是那行 mono 小字标签 */
+.gallery-hero__eyebrow {
+  margin: 0 0 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.gallery-hero__desc {
+  max-width: 46em;
+  margin-top: 0;
+  font-size: clamp(0.88rem, 1.5vw, 0.98rem);
+  line-height: 1.85;
+  color: var(--text-secondary);
+}
+
+/* ─── 结果栏：紧贴导航栏，排序在左、统计与开关在右 ─── */
+.gallery-bar {
+  padding: 14px clamp(1.25rem, 4vw, 3rem) 0;
+}
+
+.gallery-bar__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.gallery-bar__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-left: auto;
+}
+
+.gallery-bar__stats {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+
+.gallery-bar__stats b {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.gallery-bar__query {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-left: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius: 0 6px 6px 0;
+  background: var(--accent-glow);
+  color: var(--text);
+  font-size: 12.5px;
+}
+
+.gallery-bar__clear {
+  padding: 1px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 11px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.gallery-bar__clear:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.gallery-bar__mine {
+  padding: 6px 13px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.gallery-bar__mine:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* 实时预览开关 */
+.gallery-bar__preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.16s ease, border-color 0.16s ease;
+}
+
+.gallery-bar__preview:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.gallery-bar__preview.is-on {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+}
+
+.gallery-bar__switch {
+  position: relative;
+  display: inline-block;
+  width: 26px;
+  height: 15px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.gallery-bar__thumb {
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), background 0.2s ease;
+}
+
+.gallery-bar__preview.is-on .gallery-bar__switch {
+  border-color: transparent;
+  background: var(--accent-gradient);
+}
+
+.gallery-bar__preview.is-on .gallery-bar__thumb {
+  transform: translateX(11px);
+  background: #fff;
+}
+
+.gallery-sort {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-card);
+}
+
+.gallery-sort__btn {
+  padding: 5px 15px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.gallery-sort__btn:hover {
+  color: var(--text);
+}
+
+.gallery-sort__btn.is-active {
+  background: var(--accent-gradient);
+  color: #fff;
+}
+
+/* ─── 结果区 ─── */
+.gallery-results {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 3.5vw, 2.75rem) clamp(1.25rem, 4vw, 3rem) 0;
+  scroll-margin-top: 6.5rem;
+}
+
+/* 规整网格，卡片不错落：四列（≥1280px）/ 三列 / 两列 / 单列。
+   列数偏多是有意的——预览画面里的组件多是自然宽度，格子太宽会在右侧留一大片空。 */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(28px, 3vw, 46px) clamp(18px, 2.2vw, 30px);
+  align-items: start;
+}
+
+@media (max-width: 1280px) {
+  .gallery-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 980px) {
+  .gallery-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .gallery-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.gallery-grid--compact {
+  gap: 18px;
+}
+
+/* ─── 骨架屏 ─── */
+.work-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--bg-card);
+}
+
+.work-skeleton__stage {
+  height: 240px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--bg-card-hover), var(--border), var(--bg-card-hover));
+  background-size: 200% 100%;
+  animation: gallery-shimmer 1.4s ease-in-out infinite;
+}
+
+.work-skeleton__line {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--bg-card-hover), var(--border), var(--bg-card-hover));
+  background-size: 200% 100%;
+  animation: gallery-shimmer 1.4s ease-in-out infinite;
+}
+
+.work-skeleton__line--short {
+  width: 45%;
+}
+
+@keyframes gallery-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+/* ─── 空态 / 失败态 ─── */
+.gallery-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: clamp(3rem, 9vw, 6rem) 1rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.gallery-state__title {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.gallery-state__hint {
+  max-width: 30em;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.gallery-state__btn {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 9px 22px;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent-gradient);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 13px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.gallery-state__btn:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+/* ─── 分页 ─── */
+.gallery-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-top: clamp(2.5rem, 5vw, 4rem);
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+}
+
+.gallery-pager__btn {
+  padding: 8px 20px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.gallery-pager__btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.gallery-pager__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.gallery-pager__info {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.gallery-pager__info b {
+  color: var(--text);
+}

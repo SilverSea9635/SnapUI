@@ -1,12 +1,13 @@
 import { useEffect } from 'react';
-import { useCreditsStore, useUIStore } from '@/stores';
+import { useSigninStore, useUIStore } from '@/stores';
+import './SignInButton.css';
 
 function SignInButton() {
-  const signedToday = useCreditsStore((s) => s.signedToday);
-  const nextReward = useCreditsStore((s) => s.nextReward);
-  const isLoading = useCreditsStore((s) => s.isLoading);
-  const fetchSigninStatus = useCreditsStore((s) => s.fetchSigninStatus);
-  const signin = useCreditsStore((s) => s.signin);
+  const signedToday = useSigninStore((s) => s.signedToday);
+  const nextReward = useSigninStore((s) => s.nextReward);
+  const isLoading = useSigninStore((s) => s.isLoading);
+  const fetchSigninStatus = useSigninStore((s) => s.fetchSigninStatus);
+  const signin = useSigninStore((s) => s.signin);
   const showToast = useUIStore((s) => s.showToast);
 
   useEffect(() => {
@@ -15,12 +16,11 @@ function SignInButton() {
 
   const handleSignin = async () => {
     if (signedToday || isLoading) return;
-    const ok = await signin();
-    if (ok) {
-      const { consecutiveDays: days, nextReward: reward } = useCreditsStore.getState();
-      showToast('success', `签到成功！连续${days}天 +${reward}积分`);
+    const result = await signin();
+    if (result) {
+      showToast('success', `签到成功，积分+${result.reward}，明日签到可获得积分${result.tomorrowReward}`);
     } else {
-      const { error } = useCreditsStore.getState();
+      const { error } = useSigninStore.getState();
       showToast('error', error || '签到失败');
     }
   };

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchConversations, deleteConversationApi } from '@/hooks/useChat.ts';
+import { fetchConversations, deleteConversationApi } from '@/hooks/chatApi.ts';
 import { useUIStore } from '@/stores';
 import './History.css';
 
@@ -41,7 +41,10 @@ function History() {
 
   const totalPages = Math.ceil(total / pageSize);
 
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
+  const handleDelete = async (
+    id: string,
+    e: React.MouseEvent
+  ) => {
     e.stopPropagation();
     try {
       await deleteConversationApi(id);
@@ -104,10 +107,10 @@ function History() {
                 <div
                   key={convo.id}
                   className="history-card"
-                  onClick={() => navigate(`/history/${convo.id}`)}
+                  onClick={() => navigate('/chat', { state: { conversationId: convo.id } })}
                   role="button"
                   tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/history/${convo.id}`); }}
+                  onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); navigate('/chat', { state: { conversationId: convo.id } }); } }}
                 >
                   <div className="history-card__icon">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">

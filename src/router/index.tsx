@@ -1,18 +1,19 @@
 import { Suspense, type ReactNode } from 'react';
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import Layout from '@/components/Layout.tsx';
 import RequireAuth from '@/components/RequireAuth.tsx';
 import {
   ChatPage,
   Credits,
   ForgotPassword,
+  Gallery,
   History,
-  HistoryDetail,
   Home,
   Login,
   Profile,
-  QuickStart,
   Register,
+  WorkDetail,
+  WorksPage,
 } from './lazyPages';
 
 function lazyPage(element: ReactNode) {
@@ -42,11 +43,7 @@ const routes = [
       },
       {
         path: 'quick-start',
-        element: lazyPage(
-          <RequireAuth>
-            <QuickStart />
-          </RequireAuth>
-        ),
+        element: <Navigate to="/chat" replace />,
       },
       {
         path: 'chat',
@@ -57,18 +54,26 @@ const routes = [
         ),
       },
       {
-        path: 'history',
+        path: 'gallery',
+        element: lazyPage(<Gallery />),
+      },
+      {
+        path: 'works',
         element: lazyPage(
           <RequireAuth>
-            <History />
+            <WorksPage />
           </RequireAuth>
         ),
       },
       {
-        path: 'history/:conversationId',
+        path: 'works/:id',
+        element: lazyPage(<WorkDetail />),
+      },
+      {
+        path: 'history',
         element: lazyPage(
           <RequireAuth>
-            <HistoryDetail />
+            <History />
           </RequireAuth>
         ),
       },
