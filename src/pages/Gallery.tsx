@@ -1,7 +1,7 @@
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { WorkCard } from '@/components/Works/WorkCard';
-import { fetchWorks, toggleWorkFavorite, type Work, type WorkListResult, type WorkSort } from '@/hooks/worksApi';
+import { fetchWorks, toggleWorkFavorite, type Work, type WorkListResult, type WorkSort } from '@/api/works';
 import { useAuthStore, useUIStore } from '@/stores';
 import './Gallery.css';
 
@@ -29,7 +29,10 @@ function countPage(works: Work[]): Counts {
 
 function SkeletonCard() {
   return (
-    <div className="work-skeleton" aria-hidden="true">
+    <div
+      className="work-skeleton"
+      aria-hidden="true"
+    >
       <div className="work-skeleton__stage" />
       <div className="work-skeleton__line" />
       <div className="work-skeleton__line work-skeleton__line--short" />
@@ -42,20 +45,13 @@ function Gallery() {
   const showToast = useUIStore((s) => s.showToast);
 
   const [sort, setSort] = useState<SortKey>('newest');
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   // 支持从作品详情页点标签跳过来：/gallery?q=标签
-  const [q, setQ] = useState(() => searchParams.get('q') ?? '');
-  const [page, setPage] = useState(1);
+  const q = searchParams.get('q') ?? '';
+  const [pagination, setPagination] = useState({ query: q, page: 1 });
+  // 新关键词从第一页开始，避免先用旧页码请求一次。
+  const page = pagination.query === q ? pagination.page : 1;
   const [showPreview, setShowPreview] = useState(true);
-
-  // URL 上的 q 变化（例如从详情页再次跳转）时同步到搜索框
-  const urlQ = searchParams.get('q');
-  useEffect(() => {
-    if (urlQ !== null) {
-      setQ(urlQ);
-      setPage(1);
-    }
-  }, [urlQ]);
 
   const [data, setData] = useState<WorkListResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,7 +59,6 @@ function Gallery() {
   const [pageCounts, setPageCounts] = useState<Counts>(EMPTY_COUNTS);
   const [reloadNonce, setReloadNonce] = useState(0);
 
-  const deferredQ = useDeferredValue(q);
   const resultsRef = useRef<HTMLDivElement | null>(null);
   const effectiveSort: WorkSort = sort === 'newest' ? 'latest' : sort;
 
@@ -72,7 +67,7 @@ function Gallery() {
     setLoading(true);
     setFailed(false);
 
-    fetchWorks({ scope: 'public', sort: effectiveSort, q: deferredQ.trim() || undefined, page, pageSize: PAGE_SIZE })
+    fetchWorks({ scope: 'public', sort: effectiveSort, q: q.trim() || undefined, page, pageSize: PAGE_SIZE })
       .then((res) => {
         if (cancelled) return;
         setData(res);
@@ -90,7 +85,7 @@ function Gallery() {
     return () => {
       cancelled = true;
     };
-  }, [effectiveSort, deferredQ, page, reloadNonce]);
+  }, [effectiveSort, q, page, reloadNonce]);
 
   const works = data?.works ?? [];
   // 收藏是唯一会就地改写数据的操作，用独立计数避免与翻页竞态
@@ -99,7 +94,7 @@ function Gallery() {
   useEffect(() => {
     if (favoriteToggles === 0) return;
     // 收藏数变了，重新拉一次让排序/计数与后端一致（静默，不闪加载态）
-    fetchWorks({ scope: 'public', sort: effectiveSort, q: deferredQ.trim() || undefined, page, pageSize: PAGE_SIZE })
+    fetchWorks({ scope: 'public', sort: effectiveSort, q: q.trim() || undefined, page, pageSize: PAGE_SIZE })
       .then((res) => {
         setData(res);
         setPageCounts(countPage(res.works || []));
@@ -112,13 +107,19 @@ function Gallery() {
 
   const handleSort = (next: SortKey) => {
     setSort(next);
-    setPage(1);
+    setPagination({ query: q, page: 1 });
   };
 
-  const handleSearch = (value: string) => {
-    setQ(value);
-    setPage(1);
-  };
+  const handleSearch = useCallback((value: string) => {
+    const query = value.trim();
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      if (query) next.set('q', query);
+      else next.delete('q');
+      return next;
+    });
+    setPagination({ query, page: 1 });
+  }, [setSearchParams]);
 
   const handleToggleFavorite = useCallback(
     async (work: Work) => {
@@ -176,11 +177,10 @@ function Gallery() {
 
   const handleTagClick = useCallback(
     (tag: string) => {
-      setQ(tag);
-      setPage(1);
+      handleSearch(tag);
       resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     },
-    [],
+    [handleSearch],
   );
 
   const gridClass = useMemo(
@@ -189,7 +189,7 @@ function Gallery() {
   );
 
   const goToPage = (next: number) => {
-    setPage(next);
+    setPagination({ query: q, page: next });
     resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
@@ -201,7 +201,7 @@ function Gallery() {
           {/* 页面主标题（保留 h1 以维持语义/SEO） */}
           <h1 className="gallery-hero__eyebrow">SNAPUI · 作品广场</h1>
           <p className="gallery-hero__desc">
-            这里陈列着社区里已经跑通的组件。看中哪个就收藏，或者直接引用它做二次调整
+            喜欢就收藏。下一版，换你来做。
           </p>
         </div>
       </header>
@@ -209,7 +209,11 @@ function Gallery() {
       {/* ─── 结果栏：紧贴导航栏，排序在左、统计在右；搜索词来自地址栏 ─── */}
       <div className="gallery-bar">
         <div className="gallery-bar__inner">
-          <div className="gallery-sort" role="tablist" aria-label="排序方式">
+          <div
+            className="gallery-sort"
+            role="tablist"
+            aria-label="排序方式"
+          >
             <button
               className={`gallery-sort__btn${sort === 'newest' ? ' is-active' : ''}`}
               onClick={() => handleSort('newest')}
@@ -234,7 +238,11 @@ function Gallery() {
             {q ? (
               <span className="gallery-bar__query">
                 搜「{q}」· {data?.total ?? 0} 个结果
-                <button className="gallery-bar__clear" onClick={() => handleSearch('')} type="button">
+                <button
+                  className="gallery-bar__clear"
+                  onClick={() => handleSearch('')}
+                  type="button"
+                >
                   清空
                 </button>
               </span>
@@ -245,7 +253,11 @@ function Gallery() {
             )}
 
             {token ? (
-              <Link className="gallery-bar__mine" to="/works">我的作品与收藏</Link>
+              <Link
+                className="gallery-bar__mine"
+                to="/works"
+              >我的作品与收藏
+              </Link>
             ) : null}
 
             <button
@@ -256,12 +268,28 @@ function Gallery() {
               title={showPreview ? '收起实时预览（更省性能）' : '展开实时预览'}
               aria-label={showPreview ? '收起实时预览' : '展开实时预览'}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
                 <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z" />
-                <circle cx="12" cy="12" r="2.6" />
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="2.6"
+                />
               </svg>
               实时预览
-              <span className="gallery-bar__switch" aria-hidden="true">
+              <span
+                className="gallery-bar__switch"
+                aria-hidden="true"
+              >
                 <span className="gallery-bar__thumb" />
               </span>
             </button>
@@ -270,10 +298,13 @@ function Gallery() {
       </div>
 
       {/* ─── 结果 ─── */}
-      <div className="gallery-results" ref={resultsRef}>
+      <div
+        className="gallery-results"
+        ref={resultsRef}
+      >
         {loading ? (
           <div className={gridClass}>
-            {Array.from({ length: 6 }, (
+            {Array.from({ length: 4 }, (
               _,
               i
             ) => <SkeletonCard key={i} />)}
@@ -282,25 +313,58 @@ function Gallery() {
           <div className="gallery-state">
             <p className="gallery-state__title">作品广场暂时打不开</p>
             <p className="gallery-state__hint">后端接口没有返回数据，稍后再试一次。</p>
-            <button className="gallery-state__btn" onClick={() => setReloadNonce((n) => n + 1)} type="button">
+            <button
+              className="gallery-state__btn"
+              onClick={() => setReloadNonce((n) => n + 1)}
+              type="button"
+            >
               重试
             </button>
           </div>
         ) : works.length === 0 ? (
           <div className="gallery-state">
-            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" opacity="0.35" aria-hidden="true">
-              <rect x="3" y="4" width="18" height="16" rx="2" />
+            <svg
+              width="42"
+              height="42"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.1"
+              strokeLinecap="round"
+              opacity="0.35"
+              aria-hidden="true"
+            >
+              <rect
+                x="3"
+                y="4"
+                width="18"
+                height="16"
+                rx="2"
+              />
               <path d="M3 15l5-5 4 4 3-3 6 6" />
-              <circle cx="8.5" cy="8.5" r="1.4" />
+              <circle
+                cx="8.5"
+                cy="8.5"
+                r="1.4"
+              />
             </svg>
             <p className="gallery-state__title">{q ? '没有匹配的作品' : '广场上还没有公开作品'}</p>
             <p className="gallery-state__hint">
               {q ? '换个关键词试试，或者清空搜索看全部。' : '在对话里生成组件后，点「发布到广场」就会出现在这里。'}
             </p>
             {q ? (
-              <button className="gallery-state__btn" onClick={() => handleSearch('')} type="button">清空搜索</button>
+              <button
+                className="gallery-state__btn"
+                onClick={() => handleSearch('')}
+                type="button"
+              >清空搜索
+              </button>
             ) : (
-              <Link className="gallery-state__btn" to="/chat">去生成第一个作品</Link>
+              <Link
+                className="gallery-state__btn"
+                to="/chat"
+              >去生成第一个作品
+              </Link>
             )}
           </div>
         ) : (
@@ -322,7 +386,10 @@ function Gallery() {
             </div>
 
             {totalPages > 1 ? (
-              <nav className="gallery-pager" aria-label="分页">
+              <nav
+                className="gallery-pager"
+                aria-label="分页"
+              >
                 <button
                   className="gallery-pager__btn"
                   disabled={page <= 1}

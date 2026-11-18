@@ -8,7 +8,7 @@ import {
   updateWork,
   type Work,
   type WorkListResult,
-} from '@/hooks/worksApi';
+} from '@/api/works';
 import { useUIStore } from '@/stores';
 import { normalizeTags, parseTagsInput } from '@/utils/works';
 import './WorksPage.css';

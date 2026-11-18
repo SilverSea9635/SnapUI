@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LivePreview } from '@/components/Chat/LivePreview.tsx';
+import { LivePreview } from '@/components/Preview/LivePreview.tsx';
 import './Home.css';
 
 

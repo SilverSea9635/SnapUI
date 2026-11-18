@@ -1,6 +1,14 @@
 /* ─── SnapUI fake-browser 外壳 ─── */
 /* 模拟浏览器窗口：前进/后退 + 地址栏 + 内容区，路由跳转只发生在内存 history 中 */
 
+body {
+  background: transparent;
+}
+
+#preview-root {
+  display: flow-root;
+}
+
 .snapui-fake-browser {
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -71,4 +79,17 @@
 
 .snapui-fake-browser__content {
   padding: 12px;
+}
+
+.snapui-fake-browser--compact {
+  border: 0;
+  border-radius: 0;
+}
+
+.snapui-fake-browser--compact .snapui-fake-browser__bar {
+  display: none;
+}
+
+.snapui-fake-browser--compact .snapui-fake-browser__content {
+  padding: 10px;
 }

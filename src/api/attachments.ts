@@ -1,5 +1,16 @@
 import { del, get, post } from '@/utils/request';
-export type ImageAttachment = { id: string; fileName: string; mimeType: string; sizeBytes: number; width: number; height: number; sha256: string; url: string; expiresAt: number };
+export type ImageAttachment = {
+  id: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  width: number;
+  height: number;
+  sha256: string;
+  url: string;
+  expiresAt: number;
+};
+
 export const uploadImageAttachment = (
   data: string,
   mimeType: string,

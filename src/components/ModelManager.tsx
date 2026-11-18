@@ -6,7 +6,7 @@ import {
   saveModelProfile,
   type ModelProfile,
   type ModelProfileDraft
-} from '@/hooks/modelProfilesApi';
+} from '@/api/modelProfiles';
 import './ModelManager.css';
 
 const emptyDraft = (): ModelProfileDraft => ( { label:'', baseUrl:'', modelName:'', apiKey:'', isDefault:false } );

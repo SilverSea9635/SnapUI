@@ -1,12 +1,13 @@
 import { UserAvatar } from '@/components/UserAvatar';
 import { useEffect } from 'react';
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore, useUIStore, useCreditsStore } from '@/stores';
 import SignInButton from '@/components/SignInButton';
 import { NavSearch } from '@/components/NavSearch';
 import './Layout.css';
 
 function Layout() {
+  const { pathname } = useLocation();
   const theme = useUIStore((s) => s.theme);
   const toggleTheme = useUIStore((s) => s.toggleTheme);
   const user = useAuthStore((s) => s.user);
@@ -15,6 +16,11 @@ function Layout() {
   const fetchBalance = useCreditsStore((s) => s.fetchBalance);
   const fetchUser = useAuthStore((s) => s.fetchUser);
   const token = useAuthStore((s) => s.token);
+  const clearError = useAuthStore((s) => s.clearError);
+
+  useEffect(() => {
+    clearError();
+  }, [pathname, clearError]);
 
   // On mount: if token exists but user is null, restore user from API
   useEffect(() => {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LivePreview } from '@/components/Chat/LivePreview';
+import { LivePreview } from '@/components/Preview/LivePreview';
 import { CodeSurface } from './CodeSurface';
 import { useInView } from './useInView';
 import { countCodeLines } from '@/utils/works';
@@ -91,7 +91,12 @@ export function PreviewFrame({
             maxHeight={height === 'auto' ? undefined : height - 40}
                          /> : null
         ) : shouldRender ? (
-          bare && previewHeight ? <WorkThumbnail code={code} /> : <LivePreview code={code} />
+          bare && previewHeight ? <WorkThumbnail code={code} /> : (
+            <LivePreview
+              code={code}
+              compact={bare}
+            />
+          )
         ) : (
           <div className="preview-frame__pending">
             <span className="preview-frame__pending-bar" />

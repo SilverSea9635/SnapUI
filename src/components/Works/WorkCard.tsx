@@ -3,7 +3,7 @@ import { memo, useState } from 'react';
 import { WorkPreviewModal } from './WorkPreviewModal';
 import { Link } from 'react-router-dom';
 import { PreviewFrame } from './PreviewFrame';
-import type { Work } from '@/hooks/worksApi';
+import type { Work } from '@/api/works';
 import { formatRelativeTime, normalizeTags } from '@/utils/works';
 import './WorkCard.css';
 

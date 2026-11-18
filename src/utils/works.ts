@@ -1,5 +1,10 @@
 /** 作品广场相关纯函数工具（无副作用，便于复用与测试） */
 
+export function gallerySearchPath(query: string): string {
+  const trimmed = query.trim();
+  return trimmed ? `/gallery?q=${encodeURIComponent(trimmed)}` : '/gallery';
+}
+
 /** 相对时间：刚刚 / 12 分钟前 / 3 小时前 / 昨天 / 09-21 */
 export function formatRelativeTime(dateStr: string): string {
   const date = new Date(dateStr);

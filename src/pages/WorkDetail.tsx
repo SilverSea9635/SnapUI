@@ -10,7 +10,7 @@ import {
   toggleWorkFavorite,
   updateWork,
   type Work,
-} from '@/hooks/worksApi';
+} from '@/api/works';
 import { useAuthStore, useUIStore } from '@/stores';
 import { countCodeLines, formatDateTime, formatRelativeTime, normalizeTags } from '@/utils/works';
 import './WorkDetail.css';

@@ -18,6 +18,7 @@ interface AuthState {
   refreshToken: string | null;
   isLoading: boolean;
   error: string | null;
+  clearError: () => void;
 
   login: (
     email: string,
@@ -57,6 +58,7 @@ export const useAuthStore = create<AuthState>((
   refreshToken: getRefreshToken(),
   isLoading: false,
   error: null,
+  clearError: () => set({ error: null }),
 
   login: async (
     email,

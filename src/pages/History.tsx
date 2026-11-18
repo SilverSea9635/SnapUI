@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchConversations, deleteConversationApi } from '@/hooks/chatApi.ts';
+import { fetchConversations, deleteConversationApi } from '@/api/chat.ts';
 import { useUIStore } from '@/stores';
 import './History.css';
 

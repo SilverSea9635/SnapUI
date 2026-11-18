@@ -4,7 +4,7 @@ import { useAuthStore, useUIStore } from '@/stores';
 import WorksPage from './WorksPage';
 import { ModelManager } from '@/components/ModelManager';
 import { UserAvatar } from '@/components/UserAvatar';
-import { readFileAsDataUrl } from '@/components/Chat/chatUtils';
+import { readFileAsDataUrl } from '@/utils/file';
 import './Auth.css';
 import './Profile.css';
 

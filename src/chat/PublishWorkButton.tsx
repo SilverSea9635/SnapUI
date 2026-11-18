@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { createWork } from '@/hooks/worksApi';
+import { createWork } from '@/api/works';
 import { useUIStore } from '@/stores';
 import { guessTitleFromCode, parseTagsInput } from '@/utils/works';
 import './PublishWorkButton.css';
@@ -51,12 +51,27 @@ export function PublishWorkButton({ code, messageId, disabled = false }: { code:
   };
 
   return <>
-    <button className="chat__code-btn chat__code-btn--publish" type="button" disabled={disabled || publishState[messageId] === 'saving'} onClick={() => openPublish(messageId, code)}>
+    <button
+      className="chat__code-btn chat__code-btn--publish"
+      type="button"
+      disabled={disabled || publishState[messageId] === 'saving'}
+      onClick={() => openPublish(messageId, code)}
+    >
       {publishState[messageId] === 'done' ? '已发布 · 再发一次' : '发布为作品'}
     </button>
     {publishOpen ? createPortal(
-      <div className="chat-publish" onClick={() => publishOpen && publishState[publishOpen.msgId] !== 'saving' && setPublishOpen(null)} role="presentation">
-        <div className="chat-publish__panel" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="发布为作品">
+      <div
+        className="chat-publish"
+        onClick={() => publishOpen && publishState[publishOpen.msgId] !== 'saving' && setPublishOpen(null)}
+        role="presentation"
+      >
+        <div
+          className="chat-publish__panel"
+          onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-label="发布为作品"
+        >
           <h2 className="chat-publish__title">发布为作品</h2>
           <p className="chat-publish__hint">
             确认后这份组件会记入「我的作品」；勾选公开则同时出现在作品广场，供其他人浏览、收藏与引用。
@@ -92,7 +107,12 @@ export function PublishWorkButton({ code, messageId, disabled = false }: { code:
           </label>
 
           <div className="chat-publish__actions">
-            <button className="chat-publish__btn" onClick={() => setPublishOpen(null)} disabled={publishState[publishOpen.msgId] === 'saving'} type="button">
+            <button
+              className="chat-publish__btn"
+              onClick={() => setPublishOpen(null)}
+              disabled={publishState[publishOpen.msgId] === 'saving'}
+              type="button"
+            >
               取消
             </button>
             <button

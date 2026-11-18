@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { LivePreview } from '@/components/Chat/LivePreview';
+import { LivePreview } from '@/components/Preview/LivePreview';
 import { CodeSurface } from './CodeSurface';
 import './WorkPreviewModal.css';
 

@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react';
-import { LivePreview } from '@/components/Chat/LivePreview';
+import { LivePreview } from '@/components/Preview/LivePreview';
 
 /** 列表缩略预览：先按正常组件宽度排版，再整体缩放到卡片内。 */
 export function WorkThumbnail({ code }: { code: string }) {
@@ -44,7 +44,10 @@ export function WorkThumbnail({ code }: { code: string }) {
         ref={canvasRef}
         style={{ width: layout.width, left: layout.left, transform: `scale(${layout.scale})` }}
       >
-        <LivePreview code={code} />
+        <LivePreview
+          code={code}
+          compact
+        />
       </div>
     </div>
   );

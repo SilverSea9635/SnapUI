@@ -56,6 +56,7 @@ export type WorkListParams = {
   q?: string;
   page?: number;
   pageSize?: number;
+  signal?: AbortSignal;
 };
 
 function toQuery(params: Record<string, string | number | undefined>) {
@@ -68,8 +69,8 @@ function toQuery(params: Record<string, string | number | undefined>) {
   return qs ? `?${qs}` : '';
 }
 
-export function fetchWorks({ scope = 'public', sort = 'latest', q, page = 1, pageSize = 12 }: WorkListParams = {}) {
-  return get<WorkListResult>(`/api/works${toQuery({ scope, sort, q, page, pageSize })}`);
+export function fetchWorks({ scope = 'public', sort = 'latest', q, page = 1, pageSize = 12, signal }: WorkListParams = {}) {
+  return get<WorkListResult>(`/api/works${toQuery({ scope, sort, q, page, pageSize })}`, { signal });
 }
 
 export function fetchWork(id: number | string) {

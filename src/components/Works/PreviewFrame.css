@@ -116,21 +116,6 @@
   min-height: 0;
 }
 
-/* 画面即作品本身：卡片里不保留假浏览器的地址栏那一行
-   —— 那行是详情页"可交互沙箱"的说明，缩到卡片尺度只会变成噪音 */
-.preview-frame--bare .snapui-fake-browser {
-  border: none;
-  border-radius: 0;
-}
-
-.preview-frame--bare .snapui-fake-browser__bar {
-  display: none;
-}
-
-.preview-frame--bare .snapui-fake-browser__content {
-  padding: 10px;
-}
-
 .work-thumbnail {
   position: relative;
   width: 100%;

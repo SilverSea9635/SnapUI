@@ -1,7 +1,27 @@
-import axios, { type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios';
+import axios, { type AxiosError, type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios';
 import { API_BASE, getAccessToken, refreshAccessToken } from './token';
 
 export { API_BASE };
+
+type AxiosRequestError = AxiosError<{ error?: unknown }>;
+
+export class RequestError extends Error {
+  override name = 'RequestError';
+  readonly status?: number;
+  readonly code?: string;
+  readonly retryAfter?: string;
+
+  constructor(
+    message: string,
+    error: AxiosRequestError
+  ) {
+    super(message);
+    this.status = error.response?.status;
+    this.code = error.code;
+    const retryAfter = error.response?.headers['retry-after'];
+    this.retryAfter = typeof retryAfter === 'string' ? retryAfter : undefined;
+  }
+}
 
 const instance = axios.create({
   baseURL: API_BASE,
@@ -37,12 +57,35 @@ function processPendingQueue(
   pendingQueue = [];
 }
 
+function requestErrorMessage(error: AxiosRequestError): string {
+  if (error.code === 'ERR_CANCELED') return '请求已取消';
+  const message = error.response?.data?.error;
+  if (typeof message === 'string' && message.trim()) return message;
+  if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+    return '请求超时，请稍后重试';
+  }
+  if (!error.response) return '网络连接失败，请检查网络后重试';
+  if (error.response.status === 401) {
+    return error.config?.url === '/api/auth/login' ? '邮箱或密码不正确' : '登录已失效，请重新登录';
+  }
+  return '请求失败，请稍后重试';
+}
+
+function normalizeRequestError(error: unknown): Error {
+  if (axios.isAxiosError<{ error?: unknown }>(error)) {
+    return new RequestError(requestErrorMessage(error), error);
+  }
+  return error instanceof Error ? error : new Error('请求失败，请稍后重试');
+}
+
 instance.interceptors.response.use(
   (res) => res.data,
   async (err) => {
-    const originalRequest = err.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = err.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
+    const requestError = normalizeRequestError(err);
+    const isAuthSubmission = /^\/api\/auth\/(login|register|forgot-password|reset-password)$/.test(originalRequest?.url ?? '');
 
-    if (err.response?.status === 401 && !originalRequest._retry) {
+    if (err.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthSubmission) {
       originalRequest._retry = true;
 
       if (isRefreshing) {
@@ -71,18 +114,18 @@ instance.interceptors.response.use(
           }
           return instance(originalRequest);
         }
-        processPendingQueue(err, null);
-        return Promise.reject(err);
+        processPendingQueue(requestError, null);
+        return Promise.reject(requestError);
       } catch (refreshErr) {
-        processPendingQueue(refreshErr, null);
-        return Promise.reject(refreshErr);
+        const refreshError = normalizeRequestError(refreshErr);
+        processPendingQueue(refreshError, null);
+        return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
       }
     }
 
-    const message = err.response?.data?.error || err.message || '请求失败';
-    return Promise.reject(new Error(message));
+    return Promise.reject(requestError);
   },
 );
 

@@ -1,4 +1,4 @@
-import { Suspense, type ReactNode } from 'react';
+import type { ComponentType } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import Layout from '@/components/Layout.tsx';
 import RequireAuth from '@/components/RequireAuth.tsx';
@@ -16,82 +16,78 @@ import {
   WorksPage,
 } from './lazyPages';
 
-function lazyPage(element: ReactNode) {
-  return <Suspense fallback={<div aria-live="polite">页面加载中...</div>}>{element}</Suspense>;
+function lazyPage(
+  load: () => Promise<{ default: ComponentType }>,
+  requireAuth = false
+) {
+  // 交给路由等待 chunk，切页时保留当前内容，避免 Suspense fallback 闪烁。
+  return async () => {
+    const { default: Page } = await load();
+    return {
+      element: requireAuth ? <RequireAuth><Page /></RequireAuth> : <Page />,
+    };
+  };
 }
 
 const routes = [
   {
     path: '/',
     element: <Layout />,
+    // 首次直达懒加载路由时先显示布局，避免整个应用空白。
+    HydrateFallback: Layout,
     children: [
       {
         index: true,
-        element: lazyPage(<Home />),
+        lazy: lazyPage(Home),
       },
       {
         path: 'login',
-        element: lazyPage(<Login />),
+        lazy: lazyPage(Login),
       },
       {
         path: 'register',
-        element: lazyPage(<Register />),
+        lazy: lazyPage(Register),
       },
       {
         path: 'forgot-password',
-        element: lazyPage(<ForgotPassword />),
+        lazy: lazyPage(ForgotPassword),
       },
       {
         path: 'quick-start',
-        element: <Navigate to="/chat" replace />,
+        element: (
+          <Navigate
+            to="/chat"
+            replace
+          />
+        ),
       },
       {
         path: 'chat',
-        element: lazyPage(
-          <RequireAuth>
-            <ChatPage />
-          </RequireAuth>
-        ),
+        lazy: lazyPage(ChatPage, true),
       },
       {
         path: 'gallery',
-        element: lazyPage(<Gallery />),
+        lazy: lazyPage(Gallery),
       },
       {
         path: 'works',
-        element: lazyPage(
-          <RequireAuth>
-            <WorksPage />
-          </RequireAuth>
-        ),
+        lazy: lazyPage(WorksPage, true),
       },
       {
         path: 'works/:id',
-        element: lazyPage(<WorkDetail />),
+        lazy: lazyPage(WorkDetail),
       },
       {
         path: 'history',
-        element: lazyPage(
-          <RequireAuth>
-            <History />
-          </RequireAuth>
-        ),
+        lazy: lazyPage(History, true),
       },
       {
         path: 'credits',
-        element: lazyPage(
-          <RequireAuth>
-            <Credits />
-          </RequireAuth>
-        ),
+        lazy: lazyPage(Credits, true),
       },
       {
         path: 'profile',
-        element: lazyPage(
-          <RequireAuth>
-            <Profile />
-          </RequireAuth>
-        ),
+        lazy: lazyPage(Profile, true),
       },
     ],
   },

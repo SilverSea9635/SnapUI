@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { fetchModels } from '@/hooks/chatApi';
-import { fetchModelProfiles, type ModelProfile } from '@/hooks/modelProfilesApi';
+import { fetchModels } from '@/api/chat';
+import { fetchModelProfiles, type ModelProfile } from '@/api/modelProfiles';
 
 type ModelsState = {
   platformModels: string[];
